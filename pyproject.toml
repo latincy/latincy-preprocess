@@ -42,8 +42,8 @@ uv_normalizer = "latincy_preprocess.spacy:create_uv_normalizer"
 long_s_normalizer = "latincy_preprocess.spacy:create_long_s_normalizer"
 
 [project.urls]
-Homepage = "https://github.com/diyclassics/latincy-preprocess"
-Repository = "https://github.com/diyclassics/latincy-preprocess"
+Homepage = "https://github.com/latincy/latincy-preprocess"
+Repository = "https://github.com/latincy/latincy-preprocess"
 
 [tool.maturin]
 python-source = "src"

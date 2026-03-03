@@ -143,7 +143,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
   title = {latincy-preprocess: Text Preprocessing for LatinCy Projects},
   author = {Burns, Patrick J.},
   year = {2026},
-  url = {https://github.com/diyclassics/latincy-preprocess}
+  url = {https://github.com/latincy/latincy-preprocess}
 }
 ```
 
