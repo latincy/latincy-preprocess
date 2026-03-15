@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-03-15
+
+### Added
+
+- Word-initial `fo→so` disambiguation using quadgram frequency analysis (e.g. *folus→solus*, *folet→solet*) while preserving legitimate f-words (*forum*, *forma*, *fortis*).
+- Medial long-s detection: non-initial `f→s` correction using surrounding trigram evidence with f-stem protection for compound verbs (e.g. *obfecro→obsecro*, *abfens→absens*).
+
 ## [0.1.2] - 2026-02-24
 
 ### Fixed
@@ -23,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Initial release: U/V normalization, long-s OCR correction, diacritics stripping, macron removal, spaCy integration, optional Rust backend.
 
+[0.2.0]: https://github.com/latincy/latincy-preprocess/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/latincy/latincy-preprocess/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/latincy/latincy-preprocess/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/latincy/latincy-preprocess/releases/tag/v0.1.0
