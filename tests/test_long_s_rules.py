@@ -359,3 +359,76 @@ class TestCorpusRegressions:
 
         result, _ = normalizer.normalize_word_full("teipfum", apply_pass2=True)
         assert result == "teipsum"
+
+
+# ===========================================================================
+# Section 10: Word-initial fo → so
+# ===========================================================================
+
+class TestWordInitialFo:
+    """Pass 2 should handle word-initial fo → so using n-gram frequencies."""
+
+    def test_folitudinem(self, normalizer):
+        result, _ = normalizer.normalize_word_full("folitudinem", apply_pass2=True)
+        assert result == "solitudinem"
+
+    def test_folus(self, normalizer):
+        result, _ = normalizer.normalize_word_full("folus", apply_pass2=True)
+        assert result == "solus"
+
+    def test_folet(self, normalizer):
+        result, _ = normalizer.normalize_word_full("folet", apply_pass2=True)
+        assert result == "solet"
+
+    def test_forum_preserved(self, normalizer):
+        """forum is a legitimate Latin word — must NOT be changed."""
+        result, _ = normalizer.normalize_word_full("forum", apply_pass2=True)
+        assert result == "forum"
+
+    def test_forma_preserved(self, normalizer):
+        """forma is legitimate — must NOT be changed."""
+        result, _ = normalizer.normalize_word_full("forma", apply_pass2=True)
+        assert result == "forma"
+
+    def test_fortis_preserved(self, normalizer):
+        """fortis is legitimate — must NOT be changed."""
+        result, _ = normalizer.normalize_word_full("fortis", apply_pass2=True)
+        assert result == "fortis"
+
+
+# ===========================================================================
+# Section 11: Medial long-s detection
+# ===========================================================================
+
+class TestMedialLongS:
+    """Medial f (not word-initial) should be corrected when n-gram
+    evidence strongly favours s in that position."""
+
+    def test_obfecro(self, normalizer):
+        result, _ = normalizer.normalize_word_full("obfecro", apply_pass2=True)
+        assert result == "obsecro"
+
+    def test_abfens(self, normalizer):
+        result, _ = normalizer.normalize_word_full("abfens", apply_pass2=True)
+        assert result == "absens"
+
+    def test_obftetricemaccerfo(self, normalizer):
+        """Multiple medial long-s in a merged word."""
+        result, _ = normalizer.normalize_word_full("obftetricemaccerfo", apply_pass2=True)
+        assert result == "obstetricemaccerso"
+
+    def test_deferas_preserved(self, normalizer):
+        """deferas has legitimate medial f (de + fero)."""
+        result, _ = normalizer.normalize_word_full("deferas", apply_pass2=True)
+        assert result == "deferas"
+
+    def test_confilio_preserved(self, normalizer):
+        """confilio has legitimate medial f (con + filio)."""
+        result, _ = normalizer.normalize_word_full("confilio", apply_pass2=True)
+        assert result == "confilio"
+
+    def test_proficifcor(self, normalizer):
+        """proficifcor → proficiscor: medial ft caught by pass1, but
+        the first f (pro+ficiscor) is legitimate."""
+        result, _ = normalizer.normalize_word_full("proficifcor", apply_pass2=True)
+        assert result == "proficiscor"

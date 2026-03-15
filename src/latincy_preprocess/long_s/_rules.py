@@ -4,6 +4,8 @@ Long-S normalization using transformation-based learning.
 Multi-pass transformation system:
 - Pass 1: High-confidence rules (0-1% ratio) - automatic corrections
 - Pass 2: Context-dependent rules - frequency-based disambiguation
+  - Word-initial f→s using n-gram frequencies (fu, fe, fi, fo)
+  - Medial f→s using surrounding trigram evidence
 
 Based on n-gram frequency analysis of 842K Latin words.
 """
@@ -106,6 +108,7 @@ class LongSNormalizer:
             TransformationRule('fu', 'su', 'fu vs su (12.87% ratio)', 'medium', 12.87),
             TransformationRule('fe', 'se', 'fe vs se (23.30% ratio)', 'medium', 23.30),
             TransformationRule('fi', 'si', 'fi vs si (27.94% ratio)', 'low', 27.94),
+            TransformationRule('fo', 'so', 'fo vs so (n-gram dependent)', 'medium', 0.0),
         ]
 
     def normalize_word_pass1(self, word: str) -> Tuple[str, List[str]]:
@@ -171,8 +174,8 @@ class LongSNormalizer:
         normalized = word.lower()
         applied_rules = []
 
-        # Allowlist: known legitimate Latin words starting with 'fu', 'fe', 'fi'
-        # Skip Pass 2 for these to avoid false positives (alpha-sorted)
+        # Allowlist: known legitimate Latin words starting with 'fu', 'fe', 'fi', 'fo'
+        # Skip Pass 2 word-initial rules for these to avoid false positives (alpha-sorted)
         legitimate_f_words = {
             'facere', 'facio', 'facit', 'faciunt', 'feceram', 'fecerant', 'fecerat', 'fecere',
             'fecerim', 'fecerint', 'fecerit', 'fecerunt', 'feci', 'fecimus', 'fecisse', 'fecissem',
@@ -199,14 +202,25 @@ class LongSNormalizer:
             'futuram', 'futuri', 'futuris', 'futurum', 'futurus',
         }
 
-        if normalized in legitimate_f_words:
-            # Restore case even for allowlisted words
-            if is_upper:
-                normalized = normalized.upper()
-            elif is_title:
-                normalized = normalized[0].upper() + normalized[1:]
-            return normalized, applied_rules
+        if normalized not in legitimate_f_words:
+            normalized = self._normalize_word_initial_f(normalized, applied_rules, threshold)
 
+        # Medial long-s: scan for 'f' in non-initial positions and replace
+        # when surrounding n-gram evidence strongly favours 's'.
+        normalized = self._normalize_medial_f(normalized, applied_rules, threshold)
+
+        # Restore original case pattern
+        if is_upper:
+            normalized = normalized.upper()
+        elif is_title:
+            normalized = normalized[0].upper() + normalized[1:]
+
+        return normalized, applied_rules
+
+    def _normalize_word_initial_f(
+        self, normalized: str, applied_rules: List[str], threshold: float
+    ) -> str:
+        """Handle word-initial f→s disambiguation using n-gram frequencies."""
         # Word-initial 'fu' vs 'su' disambiguation (use trigrams for '<fu' pattern)
         if normalized.startswith('fu') and len(normalized) >= 2:
             fu_trigram = f"<{normalized[:2]}"  # '<fu'
@@ -236,6 +250,22 @@ class LongSNormalizer:
                 self.stats['transformations']['<fe \u2192 <se (Pass 2)'] = \
                     self.stats['transformations'].get('<fe \u2192 <se (Pass 2)', 0) + 1
 
+        # Word-initial 'fo' vs 'so' disambiguation (use quadgrams for '<fo{x}' pattern)
+        # Trigram ratio (<fo=6557 vs <so=2590) favours f, but quadgrams discriminate:
+        # e.g. <fol=19 vs <sol=2096 (long-s) but <for=6345 vs <sor=219 (keep f).
+        elif normalized.startswith('fo') and len(normalized) >= 3:
+            fo_quadgram = f"<fo{normalized[2]}"
+            so_quadgram = f"<so{normalized[2]}"
+
+            fo_freq = self.fourgrams.get(fo_quadgram, 0)
+            so_freq = self.fourgrams.get(so_quadgram, 0)
+
+            if so_freq > fo_freq * threshold and so_freq > 0:
+                normalized = 's' + normalized[1:]
+                applied_rules.append(f'<fo \u2192 <so (4gram freq: {so_freq} vs {fo_freq})')
+                self.stats['transformations']['<fo \u2192 <so (Pass 2)'] = \
+                    self.stats['transformations'].get('<fo \u2192 <so (Pass 2)', 0) + 1
+
         # Word-initial 'fi' vs 'si' disambiguation (use quadgrams for '<fi{x}' pattern)
         # Trigram ratio (<fi=7115 vs <si=18787) is only 2.6:1, too noisy.
         # Quadgrams are much more discriminating (e.g. <fim=13 vs <sim=2149).
@@ -252,13 +282,92 @@ class LongSNormalizer:
                 self.stats['transformations']['<fi \u2192 <si (Pass 2)'] = \
                     self.stats['transformations'].get('<fi \u2192 <si (Pass 2)', 0) + 1
 
-        # Restore original case pattern
-        if is_upper:
-            normalized = normalized.upper()
-        elif is_title:
-            normalized = normalized[0].upper() + normalized[1:]
+        # Word-initial 'fo' vs 'so' disambiguation (use quadgrams for '<fo{x}' pattern)
+        # Trigram ratio (<fo=6557 vs <so=2590) is 2.5:1 in favour of f, so trigrams
+        # would never trigger. But quadgrams are discriminating:
+        # e.g. <fol=19 vs <sol=2096, <foc=9 vs <soc=149
+        # while <for=6345 vs <sor=219 correctly preserves forum/fortis.
+        elif normalized.startswith('fo') and len(normalized) >= 3:
+            fo_quadgram = f"<fo{normalized[2]}"
+            so_quadgram = f"<so{normalized[2]}"
 
-        return normalized, applied_rules
+            fo_freq = self.fourgrams.get(fo_quadgram, 0)
+            so_freq = self.fourgrams.get(so_quadgram, 0)
+
+            if so_freq > fo_freq * threshold and so_freq > 0:
+                normalized = 's' + normalized[1:]
+                applied_rules.append(f'<fo \u2192 <so (4gram freq: {so_freq} vs {fo_freq})')
+                self.stats['transformations']['<fo \u2192 <so (Pass 2)'] = \
+                    self.stats['transformations'].get('<fo \u2192 <so (Pass 2)', 0) + 1
+
+        return normalized
+
+    def _normalize_medial_f(
+        self, normalized: str, applied_rules: List[str], threshold: float
+    ) -> str:
+        """Replace medial f with s when surrounding trigram evidence strongly favours s.
+
+        Scans for 'f' at non-initial positions. For each, checks the trigram
+        formed by (preceding_char, f, following_char) vs (preceding_char, s, following_char).
+        If the s-trigram is much more common, replaces f→s.
+
+        This catches patterns like obfecro→obsecro (trigram 'bfe'=0 vs 'bse'=165)
+        while preserving deferas (trigram 'efe' is common in Latin).
+
+        Compound verbs with legitimate f-roots (con+ficio, pro+ficio, de+fero,
+        con+fido, etc.) are protected by checking if the tail from 'f' onwards
+        starts with a known Latin f-stem.
+        """
+        # Latin verb/noun stems beginning with f that commonly appear
+        # after prefixes (ad-, con-, de-, e(x)-, in-, ob-, per-, prae-,
+        # pro-, re-, sub-, trans-). These must NOT be converted to s.
+        _F_STEMS = (
+            'fac', 'feci', 'fecit', 'fecund', 'fect', 'fic', 'fact', 'ficit',  # facio family
+            'fer', 'flat',  # fero family
+            'fil', 'fili',  # filius/filia
+            'fid', 'fide',  # fides/fido
+            'fin', 'fini',  # finis/finio
+            'fig', 'figu',  # figura/figo
+            'fund', 'fus', 'fud',  # fundo family
+            'fug',  # fugio
+            'flam', 'flag',  # flamma/flagro
+            'firm',  # firmo
+            'form',  # forma
+            'frag', 'fring', 'fract',  # frango family
+        )
+
+        chars = list(normalized)
+        for i in range(1, len(chars)):
+            if chars[i] != 'f':
+                continue
+
+            # Skip if tail from 'f' starts with a known f-stem
+            tail = ''.join(chars[i:])
+            if any(tail.startswith(stem) for stem in _F_STEMS):
+                continue
+
+            # Build trigrams around this position
+            prev_ch = chars[i - 1]
+            next_ch = chars[i + 1] if i + 1 < len(chars) else '>'
+
+            f_trigram = f"{prev_ch}f{next_ch}"
+            s_trigram = f"{prev_ch}s{next_ch}"
+
+            f_freq = self.trigrams.get(f_trigram, 0)
+            s_freq = self.trigrams.get(s_trigram, 0)
+
+            # Replace if s-form is overwhelmingly more common
+            if s_freq > f_freq * threshold and s_freq > 0:
+                chars[i] = 's'
+                applied_rules.append(
+                    f'medial f \u2192 s at pos {i} '
+                    f'(trigram {f_trigram}: {f_freq} vs {s_trigram}: {s_freq})'
+                )
+                rule_key = 'medial f \u2192 s (Pass 2)'
+                self.stats['transformations'][rule_key] = \
+                    self.stats['transformations'].get(rule_key, 0) + 1
+
+        return ''.join(chars)
 
     def normalize_word_full(self, word: str, apply_pass2: bool = True) -> Tuple[str, List[str]]:
         """

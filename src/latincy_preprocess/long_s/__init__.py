@@ -85,4 +85,5 @@ def _apply_rust_backend(rust_module):
         return result, applied_rules
 
     LongSNormalizer.normalize_word_pass1 = _rust_word_pass1
-    LongSNormalizer.normalize_word_pass2 = _rust_word_pass2
+    # Pass 2 stays in Python — it now handles fo→so and medial f→s
+    # which the Rust backend does not yet support.
