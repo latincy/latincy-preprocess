@@ -323,7 +323,14 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
                 if is_consonant(p) {
                     if let Some(p2) = prev2 {
                         if is_vowel(p2) {
-                            return ('v', "double_u_first_VCuu");
+                            // V-C-[u]-u: check what follows the pair
+                            if next2.map_or(false, |c| is_vowel(c)) {
+                                // V-C-[u]-u-V → first u vocalic (Vesuvius)
+                                return ('u', "double_u_first_VCuu_preV");
+                            } else {
+                                // V-C-[u]-u-C/end → first u consonantal (servus)
+                                return ('v', "double_u_first_VCuu");
+                            }
                         } else {
                             return ('u', "double_u_first_CCuu");
                         }
@@ -348,12 +355,28 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
                 if is_consonant(p2) {
                     if let Some(p3) = prev3 {
                         if is_vowel(p3) {
-                            return ('u', "double_u_second_VCuu");
+                            // V-C-u-[u]: check what follows
+                            if next1.map_or(false, |c| is_vowel(c)) {
+                                // V-C-u-[u]-V → second u consonantal (Vesuvius)
+                                return ('v', "double_u_second_VCuu_preV");
+                            } else {
+                                // V-C-u-[u]-C/end → second u vocalic (servus)
+                                return ('u', "double_u_second_VCuu");
+                            }
                         } else {
-                            return ('v', "double_u_second_CCuu");
+                            // C-C-u-[u]: check what follows
+                            if next1.map_or(false, |c| is_vowel(c)) {
+                                return ('v', "double_u_second_CCuu");
+                            } else {
+                                return ('u', "double_u_second_CCuu_end");
+                            }
                         }
                     } else {
-                        return ('v', "double_u_second_CCuu");
+                        if next1.map_or(false, |c| is_vowel(c)) {
+                            return ('v', "double_u_second_CCuu");
+                        } else {
+                            return ('u', "double_u_second_CCuu_end");
+                        }
                     }
                 } else if is_vowel(p2) {
                     if p2.to_ascii_lowercase() == 'i' && is_word_boundary(chars, idx - 2) {
@@ -617,6 +640,9 @@ mod tests {
         assert_eq!(normalize("nouus"), "novus");
         assert_eq!(normalize("iuuat"), "iuvat");
         assert_eq!(normalize("paruus"), "parvus");
+        assert_eq!(normalize("Vesuuius"), "Vesuvius");
+        assert_eq!(normalize("exuuiae"), "exuviae");
+        assert_eq!(normalize("mortuus"), "mortuus");
     }
 
     #[test]

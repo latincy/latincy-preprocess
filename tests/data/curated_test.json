@@ -2,7 +2,7 @@
   "metadata": {
     "description": "Curated test cases for U/V normalization rules",
     "version": "1.0.0",
-    "total_cases": 100,
+    "total_cases": 103,
     "categories": [
       "qu_digraph",
       "gu_ngu_digraph",
@@ -320,399 +320,420 @@
       "description": "initial v + u before consonant"
     },
     {
-      "id": 44,
+      "category": "double_u",
+      "input": "Vesuuius",
+      "expected": "Vesuvius",
+      "description": "V-C-uu before vowel: first u, second v",
+      "id": 44
+    },
+    {
+      "category": "double_u",
+      "input": "exuuiae",
+      "expected": "exuviae",
+      "description": "V-C-uu before vowel: first u, second v",
+      "id": 45
+    },
+    {
+      "category": "double_u",
+      "input": "mortuus",
+      "expected": "mortuus",
+      "description": "C-C-uu before consonant: both vocalic",
+      "id": 46
+    },
+    {
+      "id": 47,
       "category": "initial_position",
       "input": "uia",
       "expected": "via",
       "description": "initial before vowel"
     },
     {
-      "id": 45,
+      "id": 48,
       "category": "initial_position",
       "input": "uir",
       "expected": "vir",
       "description": "initial before i-vowel"
     },
     {
-      "id": 46,
+      "id": 49,
       "category": "initial_position",
       "input": "uox",
       "expected": "vox",
       "description": "initial before o"
     },
     {
-      "id": 47,
+      "id": 50,
       "category": "initial_position",
       "input": "uinum",
       "expected": "vinum",
       "description": "initial before i"
     },
     {
-      "id": 48,
+      "id": 51,
       "category": "initial_position",
       "input": "uerus",
       "expected": "verus",
       "description": "initial before e"
     },
     {
-      "id": 49,
+      "id": 52,
       "category": "initial_position",
       "input": "urbs",
       "expected": "urbs",
       "description": "initial before consonant"
     },
     {
-      "id": 50,
+      "id": 53,
       "category": "initial_position",
       "input": "usus",
       "expected": "usus",
       "description": "initial u before s"
     },
     {
-      "id": 51,
+      "id": 54,
       "category": "initial_position",
       "input": "unda",
       "expected": "unda",
       "description": "initial u before n"
     },
     {
-      "id": 52,
+      "id": 55,
       "category": "initial_position",
       "input": "unus",
       "expected": "unus",
       "description": "initial u before consonant n"
     },
     {
-      "id": 53,
+      "id": 56,
       "category": "initial_position",
       "input": "Veni",
       "expected": "Veni",
       "description": "initial capital V before vowel (preserved)"
     },
     {
-      "id": 54,
+      "id": 57,
       "category": "intervocalic",
       "input": "nouo",
       "expected": "novo",
       "description": "intervocalic v"
     },
     {
-      "id": 55,
+      "id": 58,
       "category": "intervocalic",
       "input": "breuis",
       "expected": "brevis",
       "description": "intervocalic in adjective"
     },
     {
-      "id": 56,
+      "id": 59,
       "category": "intervocalic",
       "input": "auis",
       "expected": "avis",
       "description": "intervocalic a-u-i"
     },
     {
-      "id": 57,
+      "id": 60,
       "category": "intervocalic",
       "input": "caueo",
       "expected": "caveo",
       "description": "intervocalic in verb"
     },
     {
-      "id": 58,
+      "id": 61,
       "category": "intervocalic",
       "input": "moueo",
       "expected": "moveo",
       "description": "intervocalic moveo"
     },
     {
-      "id": 59,
+      "id": 62,
       "category": "intervocalic",
       "input": "iuuenis",
       "expected": "iuvenis",
       "description": "intervocalic after initial i"
     },
     {
-      "id": 60,
+      "id": 63,
       "category": "before_consonant",
       "input": "scriptum",
       "expected": "scriptum",
       "description": "u before pt cluster"
     },
     {
-      "id": 61,
+      "id": 64,
       "category": "before_consonant",
       "input": "Augustus",
       "expected": "Augustus",
       "description": "u before g"
     },
     {
-      "id": 62,
+      "id": 65,
       "category": "before_consonant",
       "input": "causa",
       "expected": "causa",
       "description": "u before s"
     },
     {
-      "id": 63,
+      "id": 66,
       "category": "before_consonant",
       "input": "aurum",
       "expected": "aurum",
       "description": "u before r"
     },
     {
-      "id": 64,
+      "id": 67,
       "category": "before_consonant",
       "input": "laudat",
       "expected": "laudat",
       "description": "u before d"
     },
     {
-      "id": 65,
+      "id": 68,
       "category": "before_consonant",
       "input": "pauper",
       "expected": "pauper",
       "description": "u before p"
     },
     {
-      "id": 66,
+      "id": 69,
       "category": "word_final",
       "input": "tu",
       "expected": "tu",
       "description": "word-final pronoun"
     },
     {
-      "id": 67,
+      "id": 70,
       "category": "word_final",
       "input": "cum",
       "expected": "cum",
       "description": "word-final preposition"
     },
     {
-      "id": 68,
+      "id": 71,
       "category": "word_final",
       "input": "dum",
       "expected": "dum",
       "description": "word-final conjunction"
     },
     {
-      "id": 69,
+      "id": 72,
       "category": "word_final",
       "input": "sum",
       "expected": "sum",
       "description": "word-final verb"
     },
     {
-      "id": 70,
+      "id": 73,
       "category": "word_final",
       "input": "iam",
       "expected": "iam",
       "description": "no u - control case"
     },
     {
-      "id": 71,
+      "id": 74,
       "category": "post_consonant",
       "input": "silua",
       "expected": "silva",
       "description": "post-l before vowel"
     },
     {
-      "id": 72,
+      "id": 75,
       "category": "post_consonant",
       "input": "seruo",
       "expected": "servo",
       "description": "post-r before vowel"
     },
     {
-      "id": 73,
+      "id": 76,
       "category": "post_consonant",
       "input": "soluo",
       "expected": "solvo",
       "description": "post-l before vowel verb"
     },
     {
-      "id": 74,
+      "id": 77,
       "category": "post_consonant",
       "input": "uultus",
       "expected": "vultus",
       "description": "initial v, then u before lt"
     },
     {
-      "id": 75,
+      "id": 78,
       "category": "post_consonant",
       "input": "cultus",
       "expected": "cultus",
       "description": "u before lt cluster"
     },
     {
-      "id": 76,
+      "id": 79,
       "category": "mixed_complex",
       "input": "Arma uirumque cano",
       "expected": "Arma virumque cano",
       "description": "Aeneid opening - multiple patterns"
     },
     {
-      "id": 77,
+      "id": 80,
       "category": "mixed_complex",
       "input": "Veni, uidi, uici",
       "expected": "Veni, vidi, vici",
       "description": "Caesar's quote"
     },
     {
-      "id": 78,
+      "id": 81,
       "category": "mixed_complex",
       "input": "Gallia est omnis diuisa",
       "expected": "Gallia est omnis divisa",
       "description": "Caesar DBG opening"
     },
     {
-      "id": 79,
+      "id": 82,
       "category": "mixed_complex",
       "input": "in aqua uiuit",
       "expected": "in aqua vivit",
       "description": "qu + intervocalic"
     },
     {
-      "id": 80,
+      "id": 83,
       "category": "mixed_complex",
       "input": "seruus bonus fuit",
       "expected": "servus bonus fuit",
       "description": "double-u + perfect"
     },
     {
-      "id": 81,
+      "id": 84,
       "category": "mixed_complex",
       "input": "Quid uis?",
       "expected": "Quid vis?",
       "description": "qu + initial v"
     },
     {
-      "id": 82,
+      "id": 85,
       "category": "mixed_complex",
       "input": "uirtus et ueritas",
       "expected": "virtus et veritas",
       "description": "multiple initial v"
     },
     {
-      "id": 83,
+      "id": 86,
       "category": "mixed_complex",
       "input": "nouam uitam",
       "expected": "novam vitam",
       "description": "intervocalic + initial"
     },
     {
-      "id": 84,
+      "id": 87,
       "category": "mixed_complex",
       "input": "populus Romanus uicit",
       "expected": "populus Romanus vicit",
       "description": "u before consonant + initial v"
     },
     {
-      "id": 85,
+      "id": 88,
       "category": "mixed_complex",
       "input": "cui uitam dedit",
       "expected": "cui vitam dedit",
       "description": "word exception + initial v"
     },
     {
-      "id": 86,
+      "id": 89,
       "category": "mixed_complex",
       "input": "fluuius magnus fluxit",
       "expected": "fluvius magnus fluxit",
       "description": "double-u + u before x"
     },
     {
-      "id": 87,
+      "id": 90,
       "category": "mixed_complex",
       "input": "iuuenes uenerunt",
       "expected": "iuvenes venerunt",
       "description": "initial i-uv + initial v"
     },
     {
-      "id": 88,
+      "id": 91,
       "category": "mixed_complex",
       "input": "lingua Latina",
       "expected": "lingua Latina",
       "description": "ngu digraph control"
     },
     {
-      "id": 89,
+      "id": 92,
       "category": "mixed_complex",
       "input": "Augustus imperauit",
       "expected": "Augustus imperavit",
       "description": "u before g + intervocalic"
     },
     {
-      "id": 90,
+      "id": 93,
       "category": "mixed_complex",
       "input": "suus cuique",
       "expected": "suus cuique",
       "description": "word exceptions combined"
     },
     {
-      "id": 91,
+      "id": 94,
       "category": "mixed_complex",
       "input": "equus currit",
       "expected": "equus currit",
       "description": "qu + double u"
     },
     {
-      "id": 92,
+      "id": 95,
       "category": "mixed_complex",
       "input": "Vergilius scripsit",
       "expected": "Vergilius scripsit",
       "description": "name with V preserved"
     },
     {
-      "id": 93,
+      "id": 96,
       "category": "mixed_complex",
       "input": "SENATVS POPVLVSQVE ROMANVS",
       "expected": "SENATUS POPULUSQUE ROMANUS",
       "description": "SPQR - uppercase"
     },
     {
-      "id": 94,
+      "id": 97,
       "category": "mixed_complex",
       "input": "diues pauper",
       "expected": "dives pauper",
       "description": "intervocalic + before consonant"
     },
     {
-      "id": 95,
+      "id": 98,
       "category": "mixed_complex",
       "input": "nauis in portu",
       "expected": "navis in portu",
       "description": "intervocalic + word final"
     },
     {
-      "id": 96,
+      "id": 99,
       "category": "mixed_complex",
       "input": "uox populi",
       "expected": "vox populi",
       "description": "initial v + before x"
     },
     {
-      "id": 97,
+      "id": 100,
       "category": "mixed_complex",
       "input": "uita breuis est",
       "expected": "vita brevis est",
       "description": "initial v + intervocalic"
     },
     {
-      "id": 98,
+      "id": 101,
       "category": "mixed_complex",
       "input": "Caesar uenit uidit uicit",
       "expected": "Caesar venit vidit vicit",
       "description": "triple initial v"
     },
     {
-      "id": 99,
+      "id": 102,
       "category": "mixed_complex",
       "input": "per aquam et ignem",
       "expected": "per aquam et ignem",
       "description": "qu control - no u/v changes"
     },
     {
-      "id": 100,
+      "id": 103,
       "category": "mixed_complex",
       "input": "Liuius et Tacitus scripserunt",
       "expected": "Livius et Tacitus scripserunt",

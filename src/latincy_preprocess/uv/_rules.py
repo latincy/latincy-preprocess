@@ -414,10 +414,16 @@ def _classify_uv(text: str, idx: int) -> tuple[str, str]:
     if next1 and next1.lower() in ("u", "v"):
         if prev and _is_consonant(prev):
             if prev2 and _is_vowel(prev2):
-                # V-C-[u]-u → first u consonantal (servus)
-                return ("v", "double_u_first_VCuu")
+                # V-C-[u]-u pattern: which u is consonantal depends on
+                # what follows the pair
+                if next2 and _is_vowel(next2):
+                    # V-C-[u]-u-V → first u vocalic (Vesuvius)
+                    return ("u", "double_u_first_VCuu_preV")
+                else:
+                    # V-C-[u]-u-C/end → first u consonantal (servus)
+                    return ("v", "double_u_first_VCuu")
             else:
-                # C-C-[u]-u → first u vocalic (fluvius)
+                # C-C-[u]-u → first u vocalic (fluvius, mortuus)
                 return ("u", "double_u_first_CCuu")
         elif prev and _is_vowel(prev):
             # V-[u]-u patterns
@@ -432,11 +438,22 @@ def _classify_uv(text: str, idx: int) -> tuple[str, str]:
     if prev and prev.lower() in ("u", "v"):
         if prev2 and _is_consonant(prev2):
             if prev3 and _is_vowel(prev3):
-                # V-C-u-[u] → second u vocalic (servus)
-                return ("u", "double_u_second_VCuu")
+                # V-C-u-[u] pattern: which u is consonantal depends on
+                # what follows
+                if next1 and _is_vowel(next1):
+                    # V-C-u-[u]-V → second u consonantal (Vesuvius)
+                    return ("v", "double_u_second_VCuu_preV")
+                else:
+                    # V-C-u-[u]-C/end → second u vocalic (servus)
+                    return ("u", "double_u_second_VCuu")
             else:
-                # C-C-u-[u] → second u consonantal (fluvius)
-                return ("v", "double_u_second_CCuu")
+                # C-C-u-[u] pattern
+                if next1 and _is_vowel(next1):
+                    # C-C-u-[u]-V → second u consonantal (fluvius)
+                    return ("v", "double_u_second_CCuu")
+                else:
+                    # C-C-u-[u]-C/end → second u vocalic (mortuus)
+                    return ("u", "double_u_second_CCuu_end")
         elif prev2 and _is_vowel(prev2):
             if prev2.lower() == "i" and _is_word_boundary(text, idx - 2):
                 # i-u-[u] → second u consonantal (iuvat)

@@ -376,7 +376,7 @@ class TestVocalicUStems:
 
 class TestCuratedSet:
     def test_curated_test_count(self, curated_tests):
-        assert len(curated_tests) == 100
+        assert len(curated_tests) == 103
 
     def test_all_curated_cases(self, normalizer, curated_tests):
         failures = []
