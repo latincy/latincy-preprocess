@@ -42,6 +42,19 @@ fn is_u_perfect_consonant(c: char) -> bool {
     matches!(c.to_ascii_lowercase(), 'f' | 't' | 'n' | 'b' | 'c' | 'm' | 's' | 'p' | 'x')
 }
 
+const LATIN_ENCLITICS: &[&str] = &["que", "ne", "ve", "ue"];
+
+/// Return the lowercase alpha suffix of the word starting after `idx`.
+fn suffix_after(chars: &[char], idx: usize) -> String {
+    let mut result = String::new();
+    let mut pos = idx + 1;
+    while pos < chars.len() && is_alpha(chars[pos]) {
+        result.push(chars[pos].to_ascii_lowercase());
+        pos += 1;
+    }
+    result
+}
+
 fn is_word_boundary(chars: &[char], idx: usize) -> bool {
     if idx == 0 {
         return true;
@@ -146,6 +159,7 @@ const VOCALIC_U_STEMS: &[&str] = &[
     "strenu",    // strenua, strenuus, ...
     "conspicu",  // conspicua, conspicuum, ...
     "individu",  // individua, individuum, ...
+    "assidu",    // assiduis, assidua, assiduum, ... (dative pl. missed by word list)
 ];
 
 // =============================================================================
@@ -251,11 +265,12 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
                 }
             }
 
-            // -uit at word end (3sg perfect: fuit, potuit)
+            // -uit at word end or before enclitic (3sg perfect: fuit, potuit, implicuitque)
             if let Some(n2) = next2 {
                 if n2.to_ascii_lowercase() == 't' {
-                    let n3_end = next3.map_or(true, |c| !is_alpha(c));
-                    if n3_end {
+                    let after_t = suffix_after(chars, idx + 2);
+                    let t_ends_word = after_t.is_empty() || LATIN_ENCLITICS.contains(&after_t.as_str());
+                    if t_ends_word {
                         if let Some(p) = prev {
                             if is_u_perfect_consonant(p) {
                                 return ('u', "perfect_uit");

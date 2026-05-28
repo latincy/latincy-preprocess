@@ -194,6 +194,10 @@ class TestPerfectTense:
     def test_v_perfect_distinguished(self, normalizer):
         assert normalizer.normalize("soluit") == "solvit"
 
+    def test_u_perfect_with_que_enclitic(self, normalizer):
+        # implicuit (u-perfect of implico) + -que enclitic: u must stay vocalic
+        assert normalizer.normalize("implicuitque") == "implicuitque"
+
 
 class TestDoubleU:
     @pytest.mark.parametrize(
@@ -363,6 +367,8 @@ class TestVocalicUStems:
             ("strenua", "strenua"),
             ("conspicua", "conspicua"),
             ("individua", "individua"),
+            # assiduis: dative plural of assiduus — vocalic u before i
+            ("assiduis", "assiduis"),
         ],
     )
     def test_vocalic_u_stem_words(self, normalizer, input_text, expected):
@@ -376,7 +382,7 @@ class TestVocalicUStems:
 
 class TestCuratedSet:
     def test_curated_test_count(self, curated_tests):
-        assert len(curated_tests) == 103
+        assert len(curated_tests) == 105
 
     def test_all_curated_cases(self, normalizer, curated_tests):
         failures = []

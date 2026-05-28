@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-05-28
+
+### Fixed
+
+- U/V: double-u before vowel misclassified — *Vesuuius* now correctly normalizes to *Vesuvius* (V-C-uu-V pattern).
+- U/V: u-perfect forms with `-que` enclitic misclassified — *implicuitque* no longer becomes *implicvitque*; enclitic attachment now handled in perfect-tense rules (Python and Rust).
+- U/V: *assiduis* (dative plural of *assiduus*) misclassified as *assidvis*; stem `assidu-` added to vocalic-u stem list.
+
 ## [0.2.0] - 2026-03-15
 
 ### Added

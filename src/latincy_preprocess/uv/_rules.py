@@ -283,12 +283,26 @@ _VOCALIC_U_STEMS = frozenset(
         "strenu",    # strenua, strenuus, ...
         "conspicu",  # conspicua, conspicuum, ...
         "individu",  # individua, individuum, ...
+        "assidu",    # assiduis, assidua, assiduum, ... (dative pl. missed by word list)
     }
 )
 
 # Consonants that typically precede u-perfect -ui- endings
 # f (fuit), t (potuit), n (tenuit), b (habuit), c (docuit), m, s (posuit), p, x
 _U_PERFECT_CONSONANTS = frozenset("ftnbcmspx")
+
+# Latin enclitics that attach directly to word forms
+_LATIN_ENCLITICS = frozenset({"que", "ne", "ve", "ue"})
+
+
+def _suffix_after(text: str, idx: int) -> str:
+    """Return lowercase alpha chars from idx+1 to end of word."""
+    result = []
+    pos = idx + 1
+    while pos < len(text) and _is_alpha(text[pos]):
+        result.append(text[pos].lower())
+        pos += 1
+    return "".join(result)
 
 
 # =============================================================================
@@ -376,9 +390,10 @@ def _classify_uv(text: str, idx: int) -> tuple[str, str]:
             if prev and prev.lower() in _U_PERFECT_CONSONANTS:
                 return ("u", "perfect_ui")
 
-        # -uit at word end (3sg perfect: fuit, potuit)
+        # -uit at word end or before enclitic (3sg perfect: fuit, potuit, implicuitque)
         if next2 and next2.lower() == "t":
-            if next3 is None or not _is_alpha(next3):
+            after_t = _suffix_after(text, idx + 2)
+            if after_t == "" or after_t in _LATIN_ENCLITICS:
                 if prev and prev.lower() in _U_PERFECT_CONSONANTS:
                     return ("u", "perfect_uit")
 

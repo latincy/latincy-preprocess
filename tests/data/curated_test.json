@@ -738,6 +738,20 @@
       "input": "Liuius et Tacitus scripserunt",
       "expected": "Livius et Tacitus scripserunt",
       "description": "author name intervocalic"
+    },
+    {
+      "id": 104,
+      "category": "perfect_tense",
+      "input": "implicuitque",
+      "expected": "implicuitque",
+      "description": "u-perfect 3sg implico with -que enclitic"
+    },
+    {
+      "id": 105,
+      "category": "word_exceptions",
+      "input": "assiduis",
+      "expected": "assiduis",
+      "description": "assiduus dative plural — vocalic u before i"
     }
   ]
 }
