@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-06-11
+
+### Added
+
+- `betacode` submodule: convert TLG/Perseus-style Beta Code into polytonic Unicode Greek (NFC). New public API `beta_to_unicode()`, `BetaCodeReplacer`, and `is_betacode()` — a heuristic guardrail for segmenting/gating input, since `beta_to_unicode()` transliterates every ASCII letter and must not be run on Latin. Adapted from the Classical Language Toolkit (`cltk.alphabet.grc.beta_to_unicode`, MIT), ported off the `regex` dependency to the standard library so the package stays dependency-free; output verified equivalent against the upstream doctests. Includes a 40-case test suite (CLTK parity, sigma/capital/diacritic handling, corpus round-trip, and `is_betacode` detection).
+
 ## [0.2.1] - 2026-05-28
 
 ### Fixed

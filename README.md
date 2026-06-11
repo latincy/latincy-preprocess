@@ -1,6 +1,6 @@
 # latincy-preprocess
 
-Latin text preprocessing: U/V normalization, long-s OCR correction, diacritics stripping, and macron removal — with optional Rust acceleration and spaCy integration.
+Latin text preprocessing: U/V normalization, long-s OCR correction, diacritics stripping, macron removal, and Beta Code → Unicode Greek conversion — with optional Rust acceleration and spaCy integration.
 
 Consolidates [latincy-uv](https://github.com/diyclassics/latincy-uv) and [latincy-long-s](https://github.com/diyclassics/latincy-long-s) into a single package.
 
@@ -68,6 +68,29 @@ strip_macrons("ārma")
 strip_diacritics("λόγος")
 # 'λογος'
 ```
+
+### Beta Code → Unicode Greek
+
+Latin prose corpora often encode embedded Greek quotations as TLG/Perseus-style Beta Code. Convert it to polytonic Unicode (NFC):
+
+```python
+from latincy_preprocess import beta_to_unicode
+
+beta_to_unicode("zei/dwros a)/roura")
+# 'ζείδωρος ἄρουρα'
+```
+
+Note: this transliterates *every* ASCII letter to Greek, so apply it only to isolated Beta Code spans, not mixed Latin/Greek text. Use `is_betacode()` to guard or segment input:
+
+```python
+from latincy_preprocess import beta_to_unicode, is_betacode
+
+span = "a)/nqrwpos"
+clean = beta_to_unicode(span) if is_betacode(span) else span
+# 'ἄνθρωπος'  —  Latin spans are left untouched
+```
+
+`is_betacode()` is a heuristic (Beta Code written with no diacritics is indistinguishable from Latin), but it reliably catches accented Greek and ignores ordinary Latin punctuation.
 
 ## spaCy Integration
 
@@ -146,6 +169,10 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
   url = {https://github.com/latincy/latincy-preprocess}
 }
 ```
+
+## Acknowledgments
+
+The `betacode` submodule adapts the Beta Code → Unicode conversion tables and algorithm from the [Classical Language Toolkit](https://github.com/cltk/cltk) (`cltk.alphabet.grc.beta_to_unicode`), used under the MIT License (Copyright © 2013 Classical Language Toolkit). It is reimplemented here on the Python standard library so the package remains dependency-free.
 
 ## License
 

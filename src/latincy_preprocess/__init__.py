@@ -30,6 +30,7 @@ from latincy_preprocess.uv import (
 from latincy_preprocess.long_s import LongSNormalizer, TransformationRule
 from latincy_preprocess._strip import strip_macrons
 from latincy_preprocess.diacritics import strip_diacritics
+from latincy_preprocess.betacode import BetaCodeReplacer, beta_to_unicode, is_betacode
 
 try:
     from latincy_preprocess import _rust
@@ -38,10 +39,13 @@ except ImportError:
     _rust = None
     _BACKEND = "python"
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 __all__ = [
     "normalize",
     "backend",
+    "beta_to_unicode",
+    "is_betacode",
+    "BetaCodeReplacer",
     "UVNormalizerRules",
     "NormalizationResult",
     "Change",
