@@ -37,9 +37,12 @@ jobs:
         with:
           workspaces: rust
       - name: Build extension + install (dev + spacy extras)
+        # Editable install drives maturin as the PEP 517/660 build backend, so
+        # the Rust extension is compiled and installed into the runner's Python
+        # with no separate virtualenv (which `maturin develop` would require).
         run: |
-          python -m pip install --upgrade pip maturin
-          maturin develop --release --extras dev,spacy
+          python -m pip install --upgrade pip
+          pip install -e '.[dev,spacy]'
       - name: Lint (ruff)
         # src/ is the shipped code and is kept lint-clean; tests/ has pre-existing
         # lint debt not gated here (clean up separately before adding tests/).
