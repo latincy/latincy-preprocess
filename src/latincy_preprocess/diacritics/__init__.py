@@ -15,9 +15,9 @@ Basic usage:
 """
 
 from latincy_preprocess.diacritics._charset import (
-    CharsetMap,
     GREEK_BASE_CHARS,
     MUTABLE_CHARS,
+    CharsetMap,
     aligned_pairs,
     base_char,
     build_charset,

@@ -11,7 +11,6 @@ from latincy_preprocess.uv._rules import (
     UVNormalizerRules,
     normalize_uv,
     normalize_vu,
-    _get_context,
 )
 
 __all__ = [

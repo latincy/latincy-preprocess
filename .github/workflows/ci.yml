@@ -1,0 +1,63 @@
+# Lint + test on every push to main and every PR.
+# Builds the Rust extension in-place (maturin develop) so the suite runs against
+# the real compiled backend, across the supported CPython range.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push to the same branch/PR cancels an in-progress run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Build extension + install (dev + spacy extras)
+        run: |
+          python -m pip install --upgrade pip maturin
+          maturin develop --release --extras dev,spacy
+      - name: Lint (ruff)
+        # src/ is the shipped code and is kept lint-clean; tests/ has pre-existing
+        # lint debt not gated here (clean up separately before adding tests/).
+        run: ruff check src/
+      - name: Test (pytest) — full suite incl. spaCy + Rust parity
+        run: |
+          python -c "import latincy_preprocess as l; print('backend:', l.backend())"
+          pytest tests/ -q
+
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: cargo test
+        working-directory: rust
+        run: cargo test --release

@@ -334,7 +334,6 @@ def _classify_uv(text: str, idx: int) -> tuple[str, str]:
     next2 = _get_char(text, idx + 2)
     next3 = _get_char(text, idx + 3)
     next4 = _get_char(text, idx + 4)
-    next5 = _get_char(text, idx + 5)
 
     # Extract current word for exception checking
     word = _extract_word(text, idx)

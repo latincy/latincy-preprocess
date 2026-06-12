@@ -70,15 +70,15 @@ def _apply_rust_backend(rust_module):
 
         if result != lower:
             if lower.startswith('fu') and result.startswith('su'):
-                applied_rules.append(f'<fu \u2192 <su (freq: rust-accelerated)')
+                applied_rules.append('<fu \u2192 <su (freq: rust-accelerated)')
                 self.stats['transformations']['<fu \u2192 <su (Pass 2)'] = \
                     self.stats['transformations'].get('<fu \u2192 <su (Pass 2)', 0) + 1
             elif lower.startswith('fe') and result.startswith('se'):
-                applied_rules.append(f'<fe \u2192 <se (freq: rust-accelerated)')
+                applied_rules.append('<fe \u2192 <se (freq: rust-accelerated)')
                 self.stats['transformations']['<fe \u2192 <se (Pass 2)'] = \
                     self.stats['transformations'].get('<fe \u2192 <se (Pass 2)', 0) + 1
             elif lower.startswith('fi') and result.startswith('si'):
-                applied_rules.append(f'<fi \u2192 <si (4gram freq: rust-accelerated)')
+                applied_rules.append('<fi \u2192 <si (4gram freq: rust-accelerated)')
                 self.stats['transformations']['<fi \u2192 <si (Pass 2)'] = \
                     self.stats['transformations'].get('<fi \u2192 <si (Pass 2)', 0) + 1
 

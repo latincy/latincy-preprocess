@@ -11,9 +11,9 @@ Based on n-gram frequency analysis of 842K Latin words.
 """
 
 import json
-from pathlib import Path
-from typing import Dict, Tuple, List
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Tuple
 
 
 @dataclass
@@ -471,7 +471,7 @@ class LongSNormalizer:
         print("="*60)
         print(f"Total words processed: {total:,}")
         print(f"Words modified: {modified:,} ({pct:.2f}%)")
-        print(f"\nTransformations applied:")
+        print("\nTransformations applied:")
 
         for rule, count in sorted(self.stats['transformations'].items(),
                                    key=lambda x: x[1], reverse=True):

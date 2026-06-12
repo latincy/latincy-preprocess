@@ -17,8 +17,8 @@ from typing import Optional
 from spacy.language import Language
 from spacy.tokens import Doc, Token
 
-from latincy_preprocess.uv._rules import UVNormalizerRules
 from latincy_preprocess.long_s._rules import LongSNormalizer
+from latincy_preprocess.uv._rules import UVNormalizerRules
 
 __all__ = [
     "LatinPreprocessorComponent",
