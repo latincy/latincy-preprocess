@@ -39,8 +39,8 @@ jobs:
       matrix:
         target: [x86_64, aarch64]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: Build wheels
@@ -59,7 +59,7 @@ jobs:
           python -m venv .venv && source .venv/bin/activate
           pip install latincy-preprocess --no-index --find-links dist --force-reinstall
           python -c "import latincy_preprocess as l; assert l.normalize_uv('voluitque') == 'voluitque'; assert l.beta_to_unicode('lo/gos') == 'λόγος'; print('ok', l.__version__, l.backend())"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: wheels-linux-${{ matrix.target }}
           path: dist
@@ -70,8 +70,8 @@ jobs:
       matrix:
         target: [aarch64, x86_64]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: Build wheels
@@ -88,7 +88,7 @@ jobs:
           python -m venv .venv && source .venv/bin/activate
           pip install latincy-preprocess --no-index --find-links dist --force-reinstall
           python -c "import latincy_preprocess as l; assert l.normalize_uv('voluitque') == 'voluitque'; print('ok', l.__version__, l.backend())"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: wheels-macos-${{ matrix.target }}
           path: dist
@@ -96,8 +96,8 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: Build wheels
@@ -113,7 +113,7 @@ jobs:
           python -m venv .venv && source .venv/Scripts/activate
           pip install latincy-preprocess --no-index --find-links dist --force-reinstall
           python -c "import latincy_preprocess as l; assert l.normalize_uv('voluitque') == 'voluitque'; print('ok', l.__version__, l.backend())"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: wheels-windows-x64
           path: dist
@@ -121,13 +121,13 @@ jobs:
   sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
           args: --out dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: wheels-sdist
           path: dist
@@ -141,7 +141,7 @@ jobs:
     permissions:
       id-token: write   # OIDC token for Trusted Publishing — no API token needed
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           path: dist
           merge-multiple: true
