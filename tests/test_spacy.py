@@ -1,7 +1,10 @@
 """Tests for spaCy pipeline components."""
 
 import pytest
-import spacy
+
+# Skip the whole module if spaCy (an optional extra) isn't importable — e.g. a
+# broken transitive dep chain — rather than failing collection. Mirrors test_uv_spacy.py.
+spacy = pytest.importorskip("spacy")
 
 
 @pytest.fixture(autouse=True)

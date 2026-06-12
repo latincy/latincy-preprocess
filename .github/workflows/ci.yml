@@ -43,6 +43,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e '.[dev,spacy]'
+          # spaCy's CLI import needs click; some typer versions don't pull it in,
+          # which would otherwise skip the spaCy tests via importorskip.
+          python -c "import click" 2>/dev/null || pip install click
       - name: Lint (ruff)
         # src/ is the shipped code and is kept lint-clean; tests/ has pre-existing
         # lint debt not gated here (clean up separately before adding tests/).
