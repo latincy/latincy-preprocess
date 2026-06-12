@@ -372,21 +372,24 @@ def _classify_uv(text: str, idx: int) -> tuple[str, str]:
         if prev and prev.lower() == "l":
             if word.startswith(("vol", "nol", "mal", "uol")):
                 if next2 and next2.lower() == "t":
-                    if next3 is None or not _is_alpha(next3):
+                    # -uit at word end or before enclitic (voluit, voluitque)
+                    after_t = _suffix_after(text, idx + 2)
+                    if after_t == "" or after_t in _LATIN_ENCLITICS:
                         return ("u", "volo_perfect")
 
-    # Syncopated perfect -uere (3pl: potuere, fuere)
+    # Syncopated perfect -uere (3pl: potuere, fuere, potuereque)
     if next1 and next1.lower() == "e":
         if next2 and next2.lower() == "r":
             if next3 and next3.lower() == "e":
-                if next4 is None or not _is_alpha(next4):
+                after_e = _suffix_after(text, idx + 3)
+                if after_e == "" or after_e in _LATIN_ENCLITICS:
                     if prev and prev.lower() in _U_PERFECT_CONSONANTS:
                         return ("u", "perfect_uere")
 
     # Standard -ui, -uit patterns
     if next1 and next1.lower() == "i":
-        # -ui at word end (1sg perfect: fui, potui)
-        if next2 is None or not _is_alpha(next2):
+        # -ui at word end or before enclitic (1sg perfect: fui, potui, potuique)
+        if next2 is None or not _is_alpha(next2) or _suffix_after(text, idx + 1) in _LATIN_ENCLITICS:
             if prev and prev.lower() in _U_PERFECT_CONSONANTS:
                 return ("u", "perfect_ui")
 
@@ -397,20 +400,22 @@ def _classify_uv(text: str, idx: int) -> tuple[str, str]:
                 if prev and prev.lower() in _U_PERFECT_CONSONANTS:
                     return ("u", "perfect_uit")
 
-        # -uimus pattern (1pl perfect)
+        # -uimus pattern (1pl perfect: potuimus, potuimusne)
         if next2 and next2.lower() == "m":
             if next3 and next3.lower() == "u":
                 if next4 and next4.lower() == "s":
-                    if next5 is None or not _is_alpha(next5):
+                    after_s = _suffix_after(text, idx + 4)
+                    if after_s == "" or after_s in _LATIN_ENCLITICS:
                         if prev and prev.lower() in _U_PERFECT_CONSONANTS:
                             return ("u", "perfect_uimus")
 
-    # Perfect -uisse (infinitive)
+    # Perfect -uisse (infinitive: potuisse, potuisseque)
     if next1 and next1.lower() == "i":
         if next2 and next2.lower() == "s":
             if next3 and next3.lower() == "s":
                 if next4 and next4.lower() == "e":
-                    if next5 is None or not _is_alpha(next5):
+                    after_e = _suffix_after(text, idx + 4)
+                    if after_e == "" or after_e in _LATIN_ENCLITICS:
                         if prev and _is_consonant(prev):
                             return ("u", "perfect_uisse")
 

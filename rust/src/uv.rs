@@ -182,7 +182,6 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
     let next2 = if idx + 2 < len { Some(chars[idx + 2]) } else { None };
     let next3 = if idx + 3 < len { Some(chars[idx + 3]) } else { None };
     let next4 = if idx + 4 < len { Some(chars[idx + 4]) } else { None };
-    let next5 = if idx + 5 < len { Some(chars[idx + 5]) } else { None };
 
     let word = extract_word(chars, idx);
 
@@ -225,8 +224,9 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
             {
                 if let Some(n2) = next2 {
                     if n2.to_ascii_lowercase() == 't' {
-                        let n3_end = next3.map_or(true, |c| !is_alpha(c));
-                        if n3_end {
+                        // -uit at word end or before enclitic (voluit, voluitque)
+                        let after_t = suffix_after(chars, idx + 2);
+                        if after_t.is_empty() || LATIN_ENCLITICS.contains(&after_t.as_str()) {
                             return ('u', "volo_perfect");
                         }
                     }
@@ -235,14 +235,14 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
         }
     }
 
-    // Syncopated perfect -uere (3pl: potuere, fuere)
+    // Syncopated perfect -uere (3pl: potuere, fuere, potuereque)
     if let (Some(n1), Some(n2), Some(n3)) = (next1, next2, next3) {
         if n1.to_ascii_lowercase() == 'e'
             && n2.to_ascii_lowercase() == 'r'
             && n3.to_ascii_lowercase() == 'e'
         {
-            let n4_end = next4.map_or(true, |c| !is_alpha(c));
-            if n4_end {
+            let after_e = suffix_after(chars, idx + 3);
+            if after_e.is_empty() || LATIN_ENCLITICS.contains(&after_e.as_str()) {
                 if let Some(p) = prev {
                     if is_u_perfect_consonant(p) {
                         return ('u', "perfect_uere");
@@ -255,9 +255,9 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
     // Standard -ui, -uit patterns
     if let Some(n1) = next1 {
         if n1.to_ascii_lowercase() == 'i' {
-            // -ui at word end (1sg perfect: fui, potui)
-            let n2_end = next2.map_or(true, |c| !is_alpha(c));
-            if n2_end {
+            // -ui at word end or before enclitic (1sg perfect: fui, potui, potuique)
+            let after_i = suffix_after(chars, idx + 1);
+            if after_i.is_empty() || LATIN_ENCLITICS.contains(&after_i.as_str()) {
                 if let Some(p) = prev {
                     if is_u_perfect_consonant(p) {
                         return ('u', "perfect_ui");
@@ -280,14 +280,14 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
                 }
             }
 
-            // -uimus pattern (1pl perfect)
+            // -uimus pattern (1pl perfect: potuimus, potuimusne)
             if let (Some(n2), Some(n3), Some(n4)) = (next2, next3, next4) {
                 if n2.to_ascii_lowercase() == 'm'
                     && n3.to_ascii_lowercase() == 'u'
                     && n4.to_ascii_lowercase() == 's'
                 {
-                    let n5_end = next5.map_or(true, |c| !is_alpha(c));
-                    if n5_end {
+                    let after_s = suffix_after(chars, idx + 4);
+                    if after_s.is_empty() || LATIN_ENCLITICS.contains(&after_s.as_str()) {
                         if let Some(p) = prev {
                             if is_u_perfect_consonant(p) {
                                 return ('u', "perfect_uimus");
@@ -297,14 +297,14 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
                 }
             }
 
-            // Perfect -uisse (infinitive)
+            // Perfect -uisse (infinitive: potuisse, potuisseque)
             if let (Some(n2), Some(n3), Some(n4)) = (next2, next3, next4) {
                 if n2.to_ascii_lowercase() == 's'
                     && n3.to_ascii_lowercase() == 's'
                     && n4.to_ascii_lowercase() == 'e'
                 {
-                    let n5_end = next5.map_or(true, |c| !is_alpha(c));
-                    if n5_end {
+                    let after_e = suffix_after(chars, idx + 4);
+                    if after_e.is_empty() || LATIN_ENCLITICS.contains(&after_e.as_str()) {
                         if let Some(p) = prev {
                             if is_consonant(p) {
                                 return ('u', "perfect_uisse");
@@ -646,6 +646,21 @@ mod tests {
         assert_eq!(normalize("fuisse"), "fuisse");
         assert_eq!(normalize("fuerat"), "fuerat");
         assert_eq!(normalize("voluit"), "voluit");
+    }
+
+    #[test]
+    fn test_perfect_tense_with_enclitic() {
+        // Every u-perfect rule with a word-end check must also accept a
+        // trailing -que/-ne/-ve enclitic and keep the u vocalic.
+        assert_eq!(normalize("voluitque"), "voluitque"); // volo_perfect
+        assert_eq!(normalize("noluitque"), "noluitque"); // volo_perfect
+        assert_eq!(normalize("maluitque"), "maluitque"); // volo_perfect
+        assert_eq!(normalize("potuique"), "potuique"); // perfect_ui
+        assert_eq!(normalize("potuimusne"), "potuimusne"); // perfect_uimus
+        assert_eq!(normalize("potuisseque"), "potuisseque"); // perfect_uisse
+        assert_eq!(normalize("potuereque"), "potuereque"); // perfect_uere
+        // Controls: v-perfect and bare forms unaffected
+        assert_eq!(normalize("soluit"), "solvit");
     }
 
     #[test]

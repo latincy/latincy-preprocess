@@ -198,6 +198,23 @@ class TestPerfectTense:
         # implicuit (u-perfect of implico) + -que enclitic: u must stay vocalic
         assert normalizer.normalize("implicuitque") == "implicuitque"
 
+    @pytest.mark.parametrize(
+        "input_text,expected,rule",
+        [
+            ("voluitque", "voluitque", "volo_perfect"),
+            ("noluitque", "noluitque", "volo_perfect"),
+            ("maluitque", "maluitque", "volo_perfect"),
+            ("potuique", "potuique", "perfect_ui"),
+            ("potuimusne", "potuimusne", "perfect_uimus"),
+            ("potuisseque", "potuisseque", "perfect_uisse"),
+            ("potuereque", "potuereque", "perfect_uere"),
+        ],
+    )
+    def test_u_perfect_with_enclitic(self, normalizer, input_text, expected, rule):
+        # Every u-perfect rule with a word-end check must also accept a
+        # trailing -que/-ne/-ve enclitic and keep the u vocalic.
+        assert normalizer.normalize(input_text) == expected, rule
+
 
 class TestDoubleU:
     @pytest.mark.parametrize(
@@ -382,7 +399,7 @@ class TestVocalicUStems:
 
 class TestCuratedSet:
     def test_curated_test_count(self, curated_tests):
-        assert len(curated_tests) == 105
+        assert len(curated_tests) == 112
 
     def test_all_curated_cases(self, normalizer, curated_tests):
         failures = []

@@ -752,6 +752,55 @@
       "input": "assiduis",
       "expected": "assiduis",
       "description": "assiduus dative plural — vocalic u before i"
+    },
+    {
+      "id": 106,
+      "category": "perfect_tense",
+      "input": "voluitque",
+      "expected": "voluitque",
+      "description": "volo perfect (l-stem) with -que enclitic"
+    },
+    {
+      "id": 107,
+      "category": "perfect_tense",
+      "input": "noluitque",
+      "expected": "noluitque",
+      "description": "nolo perfect (l-stem) with -que enclitic"
+    },
+    {
+      "id": 108,
+      "category": "perfect_tense",
+      "input": "maluitque",
+      "expected": "maluitque",
+      "description": "malo perfect (l-stem) with -que enclitic"
+    },
+    {
+      "id": 109,
+      "category": "perfect_tense",
+      "input": "potuique",
+      "expected": "potuique",
+      "description": "u-perfect 1sg possum with -que enclitic"
+    },
+    {
+      "id": 110,
+      "category": "perfect_tense",
+      "input": "potuimusne",
+      "expected": "potuimusne",
+      "description": "u-perfect 1pl possum with -ne enclitic"
+    },
+    {
+      "id": 111,
+      "category": "perfect_tense",
+      "input": "potuisseque",
+      "expected": "potuisseque",
+      "description": "u-perfect infinitive possum with -que enclitic"
+    },
+    {
+      "id": 112,
+      "category": "perfect_tense",
+      "input": "potuereque",
+      "expected": "potuereque",
+      "description": "syncopated perfect 3pl possum with -que enclitic"
     }
   ]
 }

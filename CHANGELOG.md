@@ -5,11 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [0.3.0] - 2026-06-11
+## [0.3.0] - 2026-06-12
+
+This release bundles the U/V enclitic fixes below with the new betacode submodule. The 0.2.1 fixes were developed but never published standalone; the 0.2.1 section is retained for provenance, and 0.3.0 carries everything to PyPI (last published: 0.2.0).
 
 ### Added
 
 - `betacode` submodule: convert TLG/Perseus-style Beta Code into polytonic Unicode Greek (NFC). New public API `beta_to_unicode()`, `BetaCodeReplacer`, and `is_betacode()` — a heuristic guardrail for segmenting/gating input, since `beta_to_unicode()` transliterates every ASCII letter and must not be run on Latin. Adapted from the Classical Language Toolkit (`cltk.alphabet.grc.beta_to_unicode`, MIT), ported off the `regex` dependency to the standard library so the package stays dependency-free; output verified equivalent against the upstream doctests. Includes a 40-case test suite (CLTK parity, sigma/capital/diacritic handling, corpus round-trip, and `is_betacode` detection).
+
+### Fixed
+
+- U/V: remaining u-perfect rules with a word-end check now also accept a trailing `-que`/`-ne`/`-ve` enclitic and keep the u vocalic (extends the *implicuitque* fix from 0.2.1). Corrects *voluitque*, *noluitque*, *maluitque* (`volo_perfect`), *potuique* (`perfect_ui`), *potuimusne* (`perfect_uimus`), *potuisseque* (`perfect_uisse`), and *potuereque* (`perfect_uere`) — previously misread as *volvitque*, *potvique*, etc. Applied to both Python and Rust backends.
 
 ## [0.2.1] - 2026-05-28
 
@@ -44,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Initial release: U/V normalization, long-s OCR correction, diacritics stripping, macron removal, spaCy integration, optional Rust backend.
 
+[0.3.0]: https://github.com/latincy/latincy-preprocess/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/latincy/latincy-preprocess/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/latincy/latincy-preprocess/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/latincy/latincy-preprocess/compare/v0.1.0...v0.1.1

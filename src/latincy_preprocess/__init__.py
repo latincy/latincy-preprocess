@@ -20,6 +20,10 @@ Per-normalizer usage:
     ('statua', [...])
 """
 
+from latincy_preprocess._strip import strip_macrons
+from latincy_preprocess.betacode import BetaCodeReplacer, beta_to_unicode, is_betacode
+from latincy_preprocess.diacritics import strip_diacritics
+from latincy_preprocess.long_s import LongSNormalizer, TransformationRule
 from latincy_preprocess.uv import (
     Change,
     NormalizationResult,
@@ -27,10 +31,6 @@ from latincy_preprocess.uv import (
     normalize_uv,
     normalize_vu,
 )
-from latincy_preprocess.long_s import LongSNormalizer, TransformationRule
-from latincy_preprocess._strip import strip_macrons
-from latincy_preprocess.diacritics import strip_diacritics
-from latincy_preprocess.betacode import BetaCodeReplacer, beta_to_unicode, is_betacode
 
 try:
     from latincy_preprocess import _rust
@@ -87,8 +87,8 @@ def normalize(text: str) -> str:
 
 # Apply Rust backend if available
 if _rust is not None:
-    from latincy_preprocess.uv import _apply_rust_backend as _apply_uv_rust
     from latincy_preprocess.long_s import _apply_rust_backend as _apply_long_s_rust
+    from latincy_preprocess.uv import _apply_rust_backend as _apply_uv_rust
     _apply_uv_rust(_rust)
     _apply_long_s_rust(_rust)
 
