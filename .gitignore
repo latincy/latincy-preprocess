@@ -17,6 +17,10 @@ venv/
 target/
 Cargo.lock
 
+# uv — lockfile not committed: this is a library, so consumers resolve deps
+# fresh from pyproject.toml; uv.lock would only pin the local dev env
+uv.lock
+
 # Testing
 .pytest_cache/
 .benchmarks/
