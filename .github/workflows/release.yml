@@ -48,7 +48,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           # --find-interpreter builds a wheel per installed CPython (3.10–3.12).
-          args: --release --out dist --find-interpreter
+          args: --release --out dist
           manylinux: auto
           sccache: 'true'
       - name: Smoke-test wheel (native x86_64 only)
@@ -78,7 +78,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter
+          args: --release --out dist
           sccache: 'true'
       - name: Smoke-test wheel (native arm64 only)
         if: matrix.target == 'aarch64'
@@ -104,7 +104,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: x64
-          args: --release --out dist --find-interpreter
+          args: --release --out dist
           sccache: 'true'
       - name: Smoke-test wheel
         shell: bash
