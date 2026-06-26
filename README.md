@@ -1,4 +1,6 @@
-# latincy-preprocess
+<p align="center">
+  <img src="https://raw.githubusercontent.com/latincy/latincy-preprocess/main/assets/latincy-preprocess-logo.jpg" alt="LatinCy Preprocess" width="600">
+</p>
 
 Latin text preprocessing: U/V normalization, long-s OCR correction, diacritics stripping, macron removal, and Beta Code → Unicode Greek conversion — with optional Rust acceleration and spaCy integration.
 
