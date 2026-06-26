@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] - 2026-06-26
+
+### Fixed
+
+- U/V: *mortuus* declined forms (*mortuo*, *mortuis*, *mortuos*, *mortuam*)
+  misclassified as consonantal v — stem `mortu-` added to vocalic-u stem list.
+- U/V: *tribuo* conjugated forms (*tribuebatur*, *tribuunt*, *tribuerant*)
+  misclassified — stem `tribu-` added to vocalic-u stem list.
+- U/V: *consuetudo*, *consuetudine* (and related *insuetus*, *desuetus*)
+  misclassified — stem `suet-` added to vocalic-u stem list.
+- U/V: *triduum*, *triduo* misclassified — stem `tridu-` added to vocalic-u
+  stem list; Rule 5 double-u branch now checks vocalic-u stems before
+  returning consonantal v (previously only Rule 10 checked them).
+- U/V: 2sg/2pl perfect indicative (*adfuisti*, *fuisti*, *fuistis*, *potuisti*)
+  misclassified — new `-uisti`/`-uistis` sub-rule added to Rule 4, restricted
+  to `_U_PERFECT_CONSONANTS` to avoid false positives on consonant-stem
+  i-perfects (*soluisti* from *solvo* correctly reaches Rule 10).
+- U/V: pluperfect subjunctive (*floruisset*, *adfuisses*, *potuissem*,
+  *potuissemus*, *potuissent*) misclassified — extended the `-uisse` Rule 4
+  check to accept the full set of plupf.subj. personal endings, and restricted
+  to `_U_PERFECT_CONSONANTS` (same guard as `-uisti`).
+- U/V: 3pl perfect *-uerunt* forms (*debuerunt*, *habuerunt*, *potuerunt*,
+  *fuerunt*) misclassified — `perfect_uer_stem` extended to include `-uerunt`
+  (vowel `u` following `r` in the stem).
+- U/V: r-stem u-perfect forms (*disseruit*, *aperuit*/*aperui*, *meruit*,
+  *paruit*, *corruit*) misclassified — added as word exceptions in
+  `_VOCALIC_U_WORDS`; the consonant-set approach was rejected because it
+  creates false positives for *servit* → *seruit* (3sg present of *servio*).
+- U/V: *voluisti*/*voluistis* (2sg/2pl perfect of *volo*) misclassified —
+  extended the `volo_perfect` special case to cover `-uisti`/`-uistis` forms.
+- U/V: compound pronouns (*alicuius*, *alicui*, *alicuique*, *unicuique*,
+  *cuiusque*, *cuiuspiam*, *cuiuslibet*, *cuiusvis*) misclassified — added to
+  `_VOCALIC_U_WORDS`.
+
+All fixes applied to both Python and Rust backends (34 new regression tests).
+
 ## [0.3.0] - 2026-06-12
 
 This release bundles the U/V enclitic fixes below with the new betacode submodule. The 0.2.1 fixes were developed but never published standalone; the 0.2.1 section is retained for provenance, and 0.3.0 carries everything to PyPI (last published: 0.2.0).

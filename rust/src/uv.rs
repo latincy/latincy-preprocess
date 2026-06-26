@@ -39,6 +39,8 @@ fn is_alpha(c: char) -> bool {
 }
 
 fn is_u_perfect_consonant(c: char) -> bool {
+    // 'r' excluded: r+u+V is ambiguous (disseruit vs. servit→seruit in u-only).
+    // R-stem perfects are covered by word exceptions in VOCALIC_U_WORDS.
     matches!(c.to_ascii_lowercase(), 'f' | 't' | 'n' | 'b' | 'c' | 'm' | 's' | 'p' | 'x')
 }
 
@@ -106,8 +108,11 @@ fn get_context(chars: &[char], idx: usize, window: usize) -> String {
 
 static VOCALIC_U_WORDS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
     [
-        // Demonstrative/relative pronouns
-        "cui", "cuius", "huic", "huius", "cuique", "cuiquam",
+        // Demonstrative/relative pronouns (simple and compound)
+        "cui", "cuius", "cuique", "cuiquam",
+        "cuiusque", "cuiuspiam", "cuiuslibet", "cuiusvis",
+        "alicui", "alicuius", "alicuique", "unicuique",
+        "huic", "huius",
         // Possessive pronouns (suus, tuus)
         "sua", "suae", "suam", "suas", "suis", "suo", "suos", "suum", "suorum", "suarum",
         "tua", "tuae", "tuam", "tuas", "tuis", "tuo", "tuos", "tuum", "tuorum", "tuarum",
@@ -128,8 +133,14 @@ static VOCALIC_U_WORDS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
         // U-perfect verb forms
         "intremuit", "tremuit", "fremuit", "gemuit", "intremuitque",
         "expalluit", "palluit",
-        // Desero-type verbs
+        // R-stem u-perfect verbs (word exceptions — 'r' excluded from is_u_perfect_consonant)
         "deseruit", "inseruit", "conseruit",
+        "disserui", "disseruit", "disseruisti", "disseruistis",
+        "aperui", "aperuit", "aperuisti", "aperuistis",
+        "operui", "operuit",
+        "merui", "meruit", "meruisti",
+        "parui", "paruit", "paruisti",
+        "corrui", "corruit",
         // Syncopated perfects
         "potuere", "fuere", "habuere", "tenuere", "docuere", "monuere",
         "placuere", "tacuere", "patuere", "latuere", "caruere", "obstipuere",
@@ -152,6 +163,7 @@ const VOCALIC_U_STEMS: &[&str] = &[
     "suad",      // suadeo, persuadeo
     "suar",      // suarum
     "suav",      // suavis
+    "suet",      // consuetudo, insuetus, desuetus (from suesco)
     "statu",     // statua, statuae, ...
     "ardu",      // ardua, arduum, ...
     "fatu",      // fatua, fatuum, ...
@@ -160,6 +172,9 @@ const VOCALIC_U_STEMS: &[&str] = &[
     "conspicu",  // conspicua, conspicuum, ...
     "individu",  // individua, individuum, ...
     "assidu",    // assiduis, assidua, assiduum, ... (dative pl. missed by word list)
+    "mortu",     // mortuus, mortuo, mortuis, mortuos, ...
+    "tribu",     // tribuo, tribuebatur, tribuunt, tribuerant, ...
+    "tridu",     // triduum, triduo (three-day period)
 ];
 
 // =============================================================================
@@ -230,6 +245,24 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
                             return ('u', "volo_perfect");
                         }
                     }
+                    // -uisti/-uistis (voluisti, voluistis)
+                    if n2.to_ascii_lowercase() == 's' {
+                        if let (Some(n3), ) = (next3, ) {
+                            if n3.to_ascii_lowercase() == 't' {
+                                let after_t = suffix_after(chars, idx + 3);
+                                let mut base = after_t.as_str();
+                                for enc in LATIN_ENCLITICS {
+                                    if base.ends_with(enc) {
+                                        base = &base[..base.len() - enc.len()];
+                                        break;
+                                    }
+                                }
+                                if base == "i" || base == "is" {
+                                    return ('u', "volo_perfect");
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -297,14 +330,44 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
                 }
             }
 
-            // Perfect -uisse (infinitive: potuisse, potuisseque)
+            // Perfect -uisti, -uistis (2sg, 2pl perfect indicative)
+            if let (Some(n2), Some(n3)) = (next2, next3) {
+                if n2.to_ascii_lowercase() == 's' && n3.to_ascii_lowercase() == 't' {
+                    let after_t = suffix_after(chars, idx + 3);
+                    let mut base = after_t.as_str();
+                    for enc in LATIN_ENCLITICS {
+                        if base.ends_with(enc) {
+                            base = &base[..base.len() - enc.len()];
+                            break;
+                        }
+                    }
+                    if base == "i" || base == "is" {
+                        if let Some(p) = prev {
+                            if is_u_perfect_consonant(p) {
+                                return ('u', "perfect_uisti");
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Perfect -uisse (infinitive) and pluperfect subjunctive -uisse- forms
+            // Covers: potuisse, potuisset, potuissem, potuisses, potuissemus, etc.
             if let (Some(n2), Some(n3), Some(n4)) = (next2, next3, next4) {
                 if n2.to_ascii_lowercase() == 's'
                     && n3.to_ascii_lowercase() == 's'
                     && n4.to_ascii_lowercase() == 'e'
                 {
                     let after_e = suffix_after(chars, idx + 4);
-                    if after_e.is_empty() || LATIN_ENCLITICS.contains(&after_e.as_str()) {
+                    let mut base = after_e.as_str();
+                    for enc in LATIN_ENCLITICS {
+                        if base.ends_with(enc) {
+                            base = &base[..base.len() - enc.len()];
+                            break;
+                        }
+                    }
+                    let plupf_endings = ["", "m", "s", "t", "mus", "tis", "nt"];
+                    if plupf_endings.contains(&base) {
                         if let Some(p) = prev {
                             if is_consonant(p) {
                                 return ('u', "perfect_uisse");
@@ -316,11 +379,11 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
         }
     }
 
-    // Perfect -uera-, -ueri-, -uero- (pluperfect/future perfect)
+    // Perfect -uera-, -ueri-, -uero-, -uerunt (pluperfect/future perfect + 3pl perfect)
     if let (Some(n1), Some(n2), Some(n3)) = (next1, next2, next3) {
         if n1.to_ascii_lowercase() == 'e'
             && n2.to_ascii_lowercase() == 'r'
-            && matches!(n3.to_ascii_lowercase(), 'a' | 'i' | 'o')
+            && matches!(n3.to_ascii_lowercase(), 'a' | 'i' | 'o' | 'u')
         {
             if let Some(p) = prev {
                 if is_u_perfect_consonant(p) {
@@ -344,6 +407,13 @@ fn classify_uv(chars: &[char], idx: usize) -> (char, &'static str) {
                                 return ('u', "double_u_first_VCuu_preV");
                             } else {
                                 // V-C-[u]-u-C/end → first u consonantal (servus)
+                                // Exception: vocalic-u stems (tribuunt, triduum)
+                                let word_lower = word.to_lowercase();
+                                for stem in VOCALIC_U_STEMS {
+                                    if word_lower.contains(stem) {
+                                        return ('u', "vocalic_u_stem_double_u");
+                                    }
+                                }
                                 return ('v', "double_u_first_VCuu");
                             }
                         } else {

@@ -39,7 +39,7 @@ except ImportError:
     _rust = None
     _BACKEND = "python"
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __all__ = [
     "normalize",
     "backend",

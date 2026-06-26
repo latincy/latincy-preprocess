@@ -473,3 +473,100 @@ class TestEdgeCases:
     def test_macrons_handled(self, normalizer):
         assert normalizer.normalize("v\u012Bta") == "v\u012Bta"
         assert normalizer.normalize("u\u012Bta") == "v\u012Bta"
+
+
+# =============================================================================
+# Regression Tests: False Positives (vocalic u incorrectly \u2192 v)
+# =============================================================================
+
+
+class TestRegressionFalsePositives:
+    """Words where vocalic u was incorrectly promoted to v."""
+
+    # Bug 1: missing stems in _VOCALIC_U_STEMS
+    @pytest.mark.parametrize(
+        "input_text,expected",
+        [
+            ("mortuo", "mortuo"),
+            ("mortuis", "mortuis"),
+            ("mortuos", "mortuos"),
+            ("tribuebatur", "tribuebatur"),
+            ("tribuunt", "tribuunt"),
+            ("tribuerant", "tribuerant"),
+            ("consuetudo", "consuetudo"),
+            ("consuetudine", "consuetudine"),
+            ("triduum", "triduum"),
+            ("triduo", "triduo"),
+        ],
+    )
+    def test_vocalic_u_stems(self, normalizer, input_text, expected):
+        assert normalizer.normalize(input_text) == expected
+
+    # Bug 2: _U_PERFECT_CONSONANTS missing 'r' (r-stem perfect verbs)
+    @pytest.mark.parametrize(
+        "input_text,expected",
+        [
+            ("disseruit", "disseruit"),
+            ("aperuit", "aperuit"),
+            ("aperui", "aperui"),
+            ("meruit", "meruit"),
+            ("paruit", "paruit"),
+            ("corruit", "corruit"),
+        ],
+    )
+    def test_r_stem_perfect(self, normalizer, input_text, expected):
+        assert normalizer.normalize(input_text) == expected
+
+    # Bug 3A: missing -uisti/-uistis (2sg/2pl perfect indicative)
+    @pytest.mark.parametrize(
+        "input_text,expected",
+        [
+            ("adfuisti", "adfuisti"),
+            ("fuisti", "fuisti"),
+            ("fuistis", "fuistis"),
+            ("potuisti", "potuisti"),
+        ],
+    )
+    def test_perfect_uisti(self, normalizer, input_text, expected):
+        assert normalizer.normalize(input_text) == expected
+
+    # Bug 3B: missing pluperfect subjunctive -uisse- forms
+    @pytest.mark.parametrize(
+        "input_text,expected",
+        [
+            ("floruisset", "floruisset"),
+            ("putuisset", "putuisset"),
+            ("adfuisses", "adfuisses"),
+            ("potuissem", "potuissem"),
+            ("potuissent", "potuissent"),
+            ("potuissemus", "potuissemus"),
+        ],
+    )
+    def test_pluperfect_subjunctive(self, normalizer, input_text, expected):
+        assert normalizer.normalize(input_text) == expected
+
+    # Bug 4: perfect_uer_stem doesn't cover -uerunt (3pl perfect)
+    @pytest.mark.parametrize(
+        "input_text,expected",
+        [
+            ("debuerunt", "debuerunt"),
+            ("habuerunt", "habuerunt"),
+            ("potuerunt", "potuerunt"),
+            ("fuerunt", "fuerunt"),
+        ],
+    )
+    def test_perfect_uerunt(self, normalizer, input_text, expected):
+        assert normalizer.normalize(input_text) == expected
+
+    # Bug 5: compound pronouns with -cui-/-cuius- not in word exception list
+    @pytest.mark.parametrize(
+        "input_text,expected",
+        [
+            ("alicuius", "alicuius"),
+            ("alicui", "alicui"),
+            ("unicuique", "unicuique"),
+            ("cuiusque", "cuiusque"),
+        ],
+    )
+    def test_compound_pronouns(self, normalizer, input_text, expected):
+        assert normalizer.normalize(input_text) == expected

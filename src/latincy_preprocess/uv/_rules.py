@@ -133,13 +133,21 @@ def _get_context(text: str, idx: int, window: int = 3) -> str:
 # Words with vocalic u that might otherwise be misclassified
 _VOCALIC_U_WORDS = frozenset(
     {
-        # Demonstrative/relative pronouns
+        # Demonstrative/relative pronouns (simple and compound)
         "cui",
         "cuius",
-        "huic",
-        "huius",
         "cuique",
         "cuiquam",
+        "cuiusque",
+        "cuiuspiam",
+        "cuiuslibet",
+        "cuiusvis",
+        "alicui",
+        "alicuius",
+        "alicuique",
+        "unicuique",
+        "huic",
+        "huius",
         # Possessive pronouns (suus, tuus)
         "sua",
         "suae",
@@ -221,10 +229,28 @@ _VOCALIC_U_WORDS = frozenset(
         "intremuitque",
         "expalluit",
         "palluit",
-        # Desero-type verbs (u-perfect with 'r' stem)
+        # R-stem u-perfect verbs (word exceptions — see _U_PERFECT_CONSONANTS comment)
         "deseruit",
         "inseruit",
         "conseruit",
+        "disserui",
+        "disseruit",
+        "disseruisti",
+        "disseruistis",
+        "aperui",
+        "aperuit",
+        "aperuisti",
+        "aperuistis",
+        "operui",
+        "operuit",
+        "merui",
+        "meruit",
+        "meruisti",
+        "parui",
+        "paruit",
+        "paruisti",
+        "corrui",
+        "corruit",
         # Syncopated perfects (-uere for -uerunt)
         "potuere",
         "fuere",
@@ -276,6 +302,7 @@ _VOCALIC_U_STEMS = frozenset(
         "suad",      # suadeo, persuadeo (per-SUA-deo)
         "suar",      # suarum (sua + gen.pl.)
         "suav",      # suavis (sweet)
+        "suet",      # consuetudo, insuetus, desuetus (from suesco)
         "statu",     # statua, statuae, statuas, ...
         "ardu",      # ardua, arduum, arduo, ...
         "fatu",      # fatua, fatuum, fatuus, ...
@@ -284,12 +311,21 @@ _VOCALIC_U_STEMS = frozenset(
         "conspicu",  # conspicua, conspicuum, ...
         "individu",  # individua, individuum, ...
         "assidu",    # assiduis, assidua, assiduum, ... (dative pl. missed by word list)
+        "mortu",     # mortuus, mortuo, mortuis, mortuos, mortuam, ...
+        "tribu",     # tribuo, tribuebatur, tribuunt, tribuerant, ...
+        "tridu",     # triduum, triduo (tri + duum = three-day period)
     }
 )
 
-# Consonants that typically precede u-perfect -ui- endings
-# f (fuit), t (potuit), n (tenuit), b (habuit), c (docuit), m, s (posuit), p, x
+# Consonants that typically precede u-perfect -ui- endings.
+# f (fuit), t (potuit), n (tenuit), b (habuit), c (docuit), m, s (posuit), p, x.
+# 'r' is deliberately excluded: r+u+V appears in both u-perfects (disseruit)
+# and present-tense forms (servit → seruit in u-only text). R-stem perfects
+# are handled via word exceptions in _VOCALIC_U_WORDS instead.
 _U_PERFECT_CONSONANTS = frozenset("ftnbcmspx")
+
+# Personal endings after -uisse- for pluperfect subjunctive
+_PLUPF_SUBJ_ENDINGS = frozenset({"", "m", "s", "t", "mus", "tis", "nt"})
 
 # Latin enclitics that attach directly to word forms
 _LATIN_ENCLITICS = frozenset({"que", "ne", "ve", "ue"})
@@ -375,6 +411,17 @@ def _classify_uv(text: str, idx: int) -> tuple[str, str]:
                     after_t = _suffix_after(text, idx + 2)
                     if after_t == "" or after_t in _LATIN_ENCLITICS:
                         return ("u", "volo_perfect")
+                # -uisti/-uistis (voluisti, voluistis)
+                if next2 and next2.lower() == "s":
+                    if next3 and next3.lower() == "t":
+                        after_t = _suffix_after(text, idx + 3)
+                        base = after_t
+                        for enc in _LATIN_ENCLITICS:
+                            if base.endswith(enc):
+                                base = base[: -len(enc)]
+                                break
+                        if base in ("i", "is"):
+                            return ("u", "volo_perfect")
 
     # Syncopated perfect -uere (3pl: potuere, fuere, potuereque)
     if next1 and next1.lower() == "e":
@@ -408,20 +455,40 @@ def _classify_uv(text: str, idx: int) -> tuple[str, str]:
                         if prev and prev.lower() in _U_PERFECT_CONSONANTS:
                             return ("u", "perfect_uimus")
 
-    # Perfect -uisse (infinitive: potuisse, potuisseque)
+    # Perfect -uisti, -uistis (2sg, 2pl perfect indicative: adfuisti, fuistis)
+    if next1 and next1.lower() == "i":
+        if next2 and next2.lower() == "s":
+            if next3 and next3.lower() == "t":
+                after_t = _suffix_after(text, idx + 3)
+                base = after_t
+                for enc in _LATIN_ENCLITICS:
+                    if base.endswith(enc):
+                        base = base[: -len(enc)]
+                        break
+                if base in ("i", "is"):
+                    if prev and prev.lower() in _U_PERFECT_CONSONANTS:
+                        return ("u", "perfect_uisti")
+
+    # Perfect -uisse (infinitive) and pluperfect subjunctive -uisse- forms
+    # Covers: potuisse, potuisset, potuissem, potuisses, potuissemus, potuissetis, potuissent
     if next1 and next1.lower() == "i":
         if next2 and next2.lower() == "s":
             if next3 and next3.lower() == "s":
                 if next4 and next4.lower() == "e":
                     after_e = _suffix_after(text, idx + 4)
-                    if after_e == "" or after_e in _LATIN_ENCLITICS:
+                    base = after_e
+                    for enc in _LATIN_ENCLITICS:
+                        if base.endswith(enc):
+                            base = base[: -len(enc)]
+                            break
+                    if base in _PLUPF_SUBJ_ENDINGS:
                         if prev and _is_consonant(prev):
                             return ("u", "perfect_uisse")
 
-    # Perfect -uera-, -ueri-, -uero- (pluperfect/future perfect)
+    # Perfect -uera-, -ueri-, -uero-, -uerunt (pluperfect/future perfect + 3pl perfect)
     if next1 and next1.lower() == "e":
         if next2 and next2.lower() == "r":
-            if next3 and next3.lower() in "aio":
+            if next3 and next3.lower() in "aiou":
                 if prev and prev.lower() in _U_PERFECT_CONSONANTS:
                     return ("u", "perfect_uer_stem")
 
@@ -440,6 +507,11 @@ def _classify_uv(text: str, idx: int) -> tuple[str, str]:
                     return ("u", "double_u_first_VCuu_preV")
                 else:
                     # V-C-[u]-u-C/end → first u consonantal (servus)
+                    # Exception: vocalic-u stems (tribuunt, triduum)
+                    word_lower = word.lower()
+                    for vocalic_stem in _VOCALIC_U_STEMS:
+                        if vocalic_stem in word_lower:
+                            return ("u", "vocalic_u_stem_double_u")
                     return ("v", "double_u_first_VCuu")
             else:
                 # C-C-[u]-u → first u vocalic (fluvius, mortuus)
