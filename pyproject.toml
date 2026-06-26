@@ -7,7 +7,7 @@ name = "latincy-preprocess"
 version = "0.3.1"
 description = "Latin text preprocessing: U/V normalization, long-s correction, and more"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 license = "MIT"
 authors = [
     {name = "Patrick Burns", email = "patrick@diyclassics.org"}

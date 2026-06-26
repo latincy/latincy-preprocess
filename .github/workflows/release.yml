@@ -47,11 +47,11 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          # --find-interpreter needed inside manylinux container; python-version
-          # restricts it to cp313 so PyO3 0.23.x's 3.14 ceiling is not breached.
+          # --find-interpreter picks all Pythons inside the manylinux container.
+          # requires-python in pyproject.toml (<3.14) keeps maturin from trying
+          # 3.14 which PyO3 0.23.x does not support.
           args: --release --out dist --find-interpreter
           manylinux: auto
-          python-version: '3.13'
           sccache: 'true'
       - name: Smoke-test wheel (native x86_64 only)
         if: matrix.target == 'x86_64'
