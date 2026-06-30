@@ -83,7 +83,12 @@ class LongSNormalizer:
         Order matters: Apply longer patterns first to avoid partial matches.
         """
         return [
-            # Trigram rules first (longer patterns take precedence)
+            # 4-char rule first: poff is a zero-corpus-presence sequence; every
+            # occurrence is an OCR artifact of poss- (posse, possum, possideo, \u2026).
+            # Must precede fum\u2192sum so poffum\u2192possum, not pofsum.
+            TransformationRule('poff', 'poss', 'poff \u2192 poss (impossible in Latin)', 'high', 0.00),
+
+            # Trigram rules (longer patterns take precedence over bigrams)
             TransformationRule('fqu', 'squ', 'fqu \u2192 squ (impossible)', 'high', 0.00),
             TransformationRule('fpe', 'spe', 'fpe \u2192 spe (impossible)', 'high', 0.00),
             TransformationRule('fuf', 'sus', 'fuf \u2192 sus (0.18% ratio)', 'high', 0.18),
@@ -174,17 +179,26 @@ class LongSNormalizer:
         normalized = word.lower()
         applied_rules = []
 
-        # Allowlist: known legitimate Latin words starting with 'fu', 'fe', 'fi', 'fo'
-        # Skip Pass 2 word-initial rules for these to avoid false positives (alpha-sorted)
+        # Stems where ALL words with this prefix are legitimate Latin f- words with no
+        # OCR ambiguity — protects entire morphological families without enumeration.
+        # 'fel': the felix/felicitas family (felicem, felicissimus, feliciori, …)
+        # 'fest': the festus/festivus family (festivitate, festivitatem, …)
+        # Do NOT add stems where a common se- word could be OCR'd as fe-
+        # (e.g. 'fen' is unsafe because 'fenatus' OCRs from 'senatus').
+        _F_WORD_INITIAL_STEMS = ('fel', 'fest')
+
+        # Word-exact allowlist for words where stem-based protection would be too broad.
+        # (alpha-sorted)
         legitimate_f_words = {
             'facere', 'facio', 'facit', 'faciunt', 'feceram', 'fecerant', 'fecerat', 'fecere',
             'fecerim', 'fecerint', 'fecerit', 'fecerunt', 'feci', 'fecimus', 'fecisse', 'fecissem',
             'fecissent', 'fecisset', 'fecisti', 'fecistis', 'fecit', 'fecunda', 'fecundam', 'fecundi',
             'fecundis', 'fecunditas', 'fecunditatem', 'fecundus', 'felice', 'felicem', 'felices', 'felici',
-            'felicibus', 'felicis', 'feliciter', 'felicium', 'felix', 'femina', 'feminae', 'feminam',
+            'felicibus', 'felicis', 'feliciter', 'felicium', 'felix',
+            'femina', 'feminae', 'feminam',
             'feminarum', 'feminas', 'feminis', 'fenestra', 'fenestram', 'fenestras', 'fenestris', 'feram',
             'ferebam', 'ferebant', 'ferebat', 'ferebatur', 'feremus', 'ferendi', 'ferendo', 'ferendum',
-            'ferens', 'ferent', 'ferentem', 'ferentis', 'feres', 'feret', 'ferimus', 'fero',
+            'ferens', 'ferent', 'ferentem', 'ferentis', 'fere', 'feres', 'feret', 'ferimus', 'fero',
             'ferocem', 'feroces', 'feroci', 'ferocis', 'ferociter', 'ferox', 'ferre', 'ferrem',
             'ferrent', 'ferret', 'ferri', 'ferro', 'ferrum', 'fers', 'fert', 'fertis',
             'fertur', 'ferunt', 'feruntur', 'festa', 'festi', 'festis', 'festo', 'festum',
@@ -202,7 +216,8 @@ class LongSNormalizer:
             'futuram', 'futuri', 'futuris', 'futurum', 'futurus',
         }
 
-        if normalized not in legitimate_f_words:
+        if (not normalized.startswith(_F_WORD_INITIAL_STEMS)
+                and normalized not in legitimate_f_words):
             normalized = self._normalize_word_initial_f(normalized, applied_rules, threshold)
 
         # Medial long-s: scan for 'f' in non-initial positions and replace
@@ -324,12 +339,17 @@ class LongSNormalizer:
         _F_STEMS = (
             'fac', 'feci', 'fecit', 'fecund', 'fect', 'fic', 'fact', 'ficit',  # facio family
             'fer', 'flat',  # fero family
+            'fel',  # felix/felicitas family — protects infelix, infelicis, perfelix, etc.
             'fil', 'fili',  # filius/filia
             'fid', 'fide',  # fides/fido
             'fin', 'fini',  # finis/finio
             'fig', 'figu',  # figura/figo
-            'fund', 'fus', 'fud',  # fundo family
+            # fundo family: 'fus' was too broad — it matched word-final '-fus' in OCR
+            # artifacts like 'accenfus' (= accensus).  Inflected forms of fusus all
+            # have at least one more character after 'fus' (fusus/fuso/fusa/fusi/fusio).
+            'fund', 'fud', 'fusu', 'fuso', 'fusa', 'fusi', 'fusio',
             'fug',  # fugio
+            'ful',  # fulgeo/fulgere family — protects effulget, effulgere, affulgere
             'flam', 'flag',  # flamma/flagro
             'firm',  # firmo
             'form',  # forma
@@ -337,6 +357,41 @@ class LongSNormalizer:
         )
 
         chars = list(normalized)
+
+        # Double-f pre-pass: medial 'ff' → 'ss' when 4-gram evidence is clear.
+        # Early-modern compositors used two long-s glyphs for -ss-, which OCR
+        # reads as -ff-.  We check the 4-gram spanning both characters because
+        # individual trigrams are useless when one neighbour is the other 'f'.
+        # _F_STEMS is checked on the SECOND f's tail: legitimate aff-/eff-/off-
+        # compounds always have a known Latin f-root starting there
+        # (effectus → 'fect', offero → 'fer', officium → 'fic', …).
+        # Known miss: poffe→posse (offe:374 vs osse:521, ratio 1.4× < 2.0).
+        idx = 1
+        while idx < len(chars) - 1:
+            if chars[idx] == 'f' and chars[idx + 1] == 'f':
+                tail2 = ''.join(chars[idx + 1:])
+                if any(tail2.startswith(stem) for stem in _F_STEMS):
+                    idx += 2
+                    continue
+                prev_ch = chars[idx - 1]
+                next_ch = chars[idx + 2] if idx + 2 < len(chars) else '>'
+                ff_4gram = f"{prev_ch}ff{next_ch}"
+                ss_4gram = f"{prev_ch}ss{next_ch}"
+                ff_freq = self.fourgrams.get(ff_4gram, 0)
+                ss_freq = self.fourgrams.get(ss_4gram, 0)
+                if ss_freq > ff_freq * threshold and ss_freq > 0:
+                    chars[idx] = 's'
+                    chars[idx + 1] = 's'
+                    applied_rules.append(
+                        f'medial ff → ss at pos {idx} '
+                        f'(4gram {ff_4gram}: {ff_freq} vs {ss_4gram}: {ss_freq})'
+                    )
+                    self.stats['transformations']['medial ff → ss (Pass 2)'] = \
+                        self.stats['transformations'].get('medial ff → ss (Pass 2)', 0) + 1
+                    idx += 2
+                    continue
+            idx += 1
+
         for i in range(1, len(chars)):
             if chars[i] != 'f':
                 continue

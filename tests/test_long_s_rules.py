@@ -139,6 +139,20 @@ class TestPass1Rules:
         assert result == "dominus"
         assert rules == []
 
+    def test_poff_to_poss(self, normalizer):
+        """poff is an impossible Latin 4-gram (zero corpus presence);
+        poff→poss is a high-confidence Pass 1 rule like ft/fp/fc."""
+        result, rules = normalizer.normalize_word_pass1("poffe")
+        assert result == "posse"
+        assert any("poff" in r for r in rules)
+
+    def test_poff_family(self, normalizer):
+        """poff→poss applies across the posse/possum/possideo family."""
+        cases = {"poffum": "possum", "poffideo": "possideo", "poffibile": "possibile"}
+        for ocr, expected in cases.items():
+            result, _ = normalizer.normalize_word_pass1(ocr)
+            assert result == expected, f"{ocr} → expected {expected}, got {result}"
+
 
 # ===========================================================================
 # Section 4: Word-final f -> s
@@ -432,3 +446,167 @@ class TestMedialLongS:
         the first f (pro+ficiscor) is legitimate."""
         result, _ = normalizer.normalize_word_full("proficifcor", apply_pass2=True)
         assert result == "proficiscor"
+
+
+# ===========================================================================
+# Section 12: Regression — false positives (correct Latin wrongly altered)
+# Surfaced in latincy-pretrain D3 corpus-correction QA, 2026-06-30.
+# ===========================================================================
+
+class TestFalsePositiveRegressions:
+    """Words Pass 2 must NOT alter — they are genuine Latin, not OCR long-s."""
+
+    # --- medial f protection (via _F_STEMS 'fel' entry) ---
+
+    def test_infelix_preserved(self, normalizer):
+        """infelix: medial 'f' is from the felix root (in+felix);
+        must not become 'inselix' via the medial nf→ns trigram rule."""
+        result, _ = normalizer.normalize_word_full("infelix", apply_pass2=True)
+        assert result == "infelix"
+
+    def test_infelicis_preserved(self, normalizer):
+        """infelicis: genitive of infelix; medial f from felix root."""
+        result, _ = normalizer.normalize_word_full("infelicis", apply_pass2=True)
+        assert result == "infelicis"
+
+    # --- word-initial f protection: stem-aware ('fel' prefix) ---
+    # These words are NOT in the word-exact allowlist; they must be protected
+    # by the 'fel' stem prefix check, not by individual enumeration.
+
+    def test_felicitas_preserved(self, normalizer):
+        """felicitas: stem-aware 'fel' prefix should protect this and all inflections."""
+        result, _ = normalizer.normalize_word_full("felicitas", apply_pass2=True)
+        assert result == "felicitas"
+
+    def test_felicitas_inflected_forms_preserved(self, normalizer):
+        """All standard inflections of felicitas — covered by 'fel' stem, not word list."""
+        for word in ["felicitatis", "felicitatem", "felicitati", "felicitate"]:
+            result, _ = normalizer.normalize_word_full(word, apply_pass2=True)
+            assert result == word, f"Expected {word!r} preserved, got {result!r}"
+
+    def test_felicissimus_preserved(self, normalizer):
+        """felicissimus (superlative): not in the word list — stem check only."""
+        result, _ = normalizer.normalize_word_full("felicissimus", apply_pass2=True)
+        assert result == "felicissimus"
+
+    def test_feliciori_preserved(self, normalizer):
+        """feliciori (comparative dative): not in the word list — stem check only."""
+        result, _ = normalizer.normalize_word_full("feliciori", apply_pass2=True)
+        assert result == "feliciori"
+
+    # --- word-initial f protection: stem-aware ('fest' prefix) ---
+
+    def test_festus_preserved(self, normalizer):
+        """festus: nominative singular — covered by 'fest' stem, not word list."""
+        result, _ = normalizer.normalize_word_full("festus", apply_pass2=True)
+        assert result == "festus"
+
+    def test_festivus_preserved(self, normalizer):
+        """festivus: not in the word list — stem 'fest' check only."""
+        result, _ = normalizer.normalize_word_full("festivus", apply_pass2=True)
+        assert result == "festivus"
+
+    def test_festivitate_preserved(self, normalizer):
+        """festivitate: not in the word list — stem 'fest' check only."""
+        result, _ = normalizer.normalize_word_full("festivitate", apply_pass2=True)
+        assert result == "festivitate"
+
+    # --- word-exact one-off ---
+
+    def test_fere_preserved(self, normalizer):
+        """fere: common adverb with no morphological family; stays word-exact."""
+        result, _ = normalizer.normalize_word_full("fere", apply_pass2=True)
+        assert result == "fere"
+
+
+# ===========================================================================
+# Section 13: Regression — false negatives (real long-s OCR errors missed)
+# ===========================================================================
+
+class TestFalseNegativeRegressions:
+    """OCR long-s artifacts that Pass 2 must correct but previously missed."""
+
+    def test_accenfus_corrected(self, normalizer):
+        """accenfus → accensus: medial 'nf' is an OCR long-s artifact.
+        Previously blocked by the over-broad 'fus' entry in _F_STEMS,
+        which was intended for the fundo family (confusus, diffusus, …)
+        but also matched the word-final '-fus' in 'accenfus'."""
+        result, _ = normalizer.normalize_word_full("accenfus", apply_pass2=True)
+        assert result == "accensus"
+
+
+# ===========================================================================
+# Section 14: Double-f (ff → ss) OCR correction
+# Medial '-ff-' clusters are an early-modern long-s artifact: the compositor
+# set two long-s glyphs for '-ss-', OCR reads them both as 'f'.
+# 4-gram evidence drives the correction; _F_STEMS guards genuine Latin
+# compounds (ex/ob/ad + f-root) from false conversion.
+# Known miss: poffe→posse cannot be corrected safely — offe:374 vs osse:521
+# is only 1.4× at the 4-gram level, below the 2.0 threshold.
+# ===========================================================================
+
+class TestDoubleF:
+    """Pass 2 must correct medial ff→ss when n-gram evidence is clear."""
+
+    # --- OCR corrections (false negatives fixed by double-f pass) ---
+
+    def test_gloffario_corrected(self, normalizer):
+        """Gloffario → Glossario: 4-gram offa:1 vs ossa:59 (59×)."""
+        result, _ = normalizer.normalize_word_full("Gloffario", apply_pass2=True)
+        assert result == "Glossario"
+
+    def test_claffis_corrected(self, normalizer):
+        """claffis → classis: 4-gram affi:51 vs assi:584 (11.5×)."""
+        result, _ = normalizer.normalize_word_full("claffis", apply_pass2=True)
+        assert result == "classis"
+
+    def test_miffus_corrected(self, normalizer):
+        """miffus → missus: 4-gram iffu:26 vs issu:216 (8.3×)."""
+        result, _ = normalizer.normalize_word_full("miffus", apply_pass2=True)
+        assert result == "missus"
+
+    def test_paffus_corrected(self, normalizer):
+        """paffus → passus: 4-gram affu:5 vs assu:350 (70×)."""
+        result, _ = normalizer.normalize_word_full("paffus", apply_pass2=True)
+        assert result == "passus"
+
+    def test_neceffe_corrected(self, normalizer):
+        """neceffe → necesse: 4-gram effe:754 vs esse:6717 (8.9×)."""
+        result, _ = normalizer.normalize_word_full("neceffe", apply_pass2=True)
+        assert result == "necesse"
+
+    def test_poffe_corrected(self, normalizer):
+        """poffe → posse: poff has zero corpus presence so it is a Pass 1 rule,
+        not a 4-gram heuristic (offe:374/osse:521 is only 1.4×, below threshold)."""
+        result, _ = normalizer.normalize_word_full("poffe", apply_pass2=True)
+        assert result == "posse"
+
+    # --- Legitimate Latin ff-compounds must NOT be altered ---
+    # Without _F_STEMS protection on the second-f tail, all of these would
+    # fire: effectus (8.9×), officium (8.7×), efficio (3.4×), afferens (2.9×).
+
+    def test_effectus_preserved(self, normalizer):
+        """effectus: second-f tail 'fectus' starts with 'fect' → _F_STEMS blocks."""
+        result, _ = normalizer.normalize_word_full("effectus", apply_pass2=True)
+        assert result == "effectus"
+
+    def test_officium_preserved(self, normalizer):
+        """officium: second-f tail 'ficium' starts with 'fic' → _F_STEMS blocks."""
+        result, _ = normalizer.normalize_word_full("officium", apply_pass2=True)
+        assert result == "officium"
+
+    def test_efficio_preserved(self, normalizer):
+        """efficio: second-f tail 'ficio' starts with 'fic' → _F_STEMS blocks."""
+        result, _ = normalizer.normalize_word_full("efficio", apply_pass2=True)
+        assert result == "efficio"
+
+    def test_afferens_preserved(self, normalizer):
+        """afferens: second-f tail 'ferens' starts with 'fer' → _F_STEMS blocks."""
+        result, _ = normalizer.normalize_word_full("afferens", apply_pass2=True)
+        assert result == "afferens"
+
+    def test_effulget_preserved(self, normalizer):
+        """effulget: second-f tail 'fulget' — needs 'ful' in _F_STEMS (ratio 5.8×
+        would otherwise fire)."""
+        result, _ = normalizer.normalize_word_full("effulget", apply_pass2=True)
+        assert result == "effulget"

@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.2] - 2026-06-30
+
+### Fixed
+
+- Long-S: `infelix`/`infelicis` and related compounds incorrectly converted to
+  `inselix`/`inselicis` — added `'fel'` stem to `_F_STEMS` so the medial-f
+  guard recognises the *felix/felicitas* family in prefix compounds.
+- Long-S: word-initial *fe-* words (`felicitas`, `fere`, `festus`) incorrectly
+  converted — added `_F_WORD_INITIAL_STEMS = ('fel', 'fest')` stem-prefix guard
+  in Pass 2, replacing fragile word-exact entries; `fere` retained word-exact as
+  it has no morphological family.
+- Long-S: `accensus` OCR form `accenfus` not corrected — `'fus'` stem was too
+  broad and matched word-final `-fus`; replaced with specific inflection stems
+  (`'fusu'`, `'fuso'`, `'fusa'`, `'fusi'`, `'fusio'`).
+- Long-S: `efulget` family (`effulget`, `affulgere`) incorrectly converted —
+  added `'ful'` stem to `_F_STEMS`.
+- Long-S: double-*f* → *ss* OCR pattern entirely unhandled (`Gloffario`,
+  `claffis`, `miffus`, `paffus`, `neceffe`) — added 4-gram pre-scan in
+  `_normalize_medial_f()` comparing `[prev]ff[next]` vs `[prev]ss[next]`
+  frequency; `_F_STEMS` guard applied to the second-*f* tail to protect
+  legitimate compounds (`offero`, `effulget`).
+- Long-S: `poffe` not corrected to `posse` — `poff` has zero corpus presence
+  and is phonologically impossible in Latin; added `poff → poss` as a Pass 1
+  rule (alongside `ft`, `fp`, `fc`); applied before Rust backend so that
+  `poffum → possum` rather than `pofsum`.
+
 ## [0.3.1] - 2026-06-26
 
 ### Fixed

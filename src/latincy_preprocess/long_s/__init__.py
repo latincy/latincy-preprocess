@@ -12,6 +12,14 @@ __all__ = ["LongSNormalizer", "TransformationRule"]
 
 # Pass 1 rule descriptions (must match the originals from _define_pass1_rules
 # so that tests checking `any("ft" in r for r in rules)` etc. still pass).
+
+# 4-char rules that the Rust backend does not yet implement.  Applied in the
+# Python wrapper BEFORE calling Rust so that ordering is correct — e.g.
+# poffum→possum (not pofsum, which would result if Rust's fum→sum fired first).
+_PASS1_QUADGRAM_RULES = [
+    ("poff", "poss", "poff → poss (impossible in Latin)"),
+]
+
 _PASS1_TRIGRAM_RULES = [
     ("fqu", "squ", "fqu \u2192 squ (impossible)"),
     ("fpe", "spe", "fpe \u2192 spe (impossible)"),
@@ -30,12 +38,42 @@ def _apply_rust_backend(rust_module):
 
     def _rust_word_pass1(self, word):
         """Apply Pass 1 using Rust backend, with Python-compatible stats/rules."""
-        result = rust_module.normalize_long_s_word_pass1(word)
         lower = word.lower()
+
+        # Pre-apply 4-char rules the Rust backend doesn't implement.
+        # Must happen before calling Rust so ordering is preserved
+        # (e.g. poffum \u2192 possum, not pofsum from Rust's fum\u2192sum firing first).
+        pre_lower = lower
+        for pattern, replacement, _ in _PASS1_QUADGRAM_RULES:
+            if pattern in pre_lower:
+                pre_lower = pre_lower.replace(pattern, replacement)
+
+        if pre_lower != lower:
+            is_upper = len(word) > 1 and word.isupper()
+            is_title = word[0:1].isupper() and (len(word) == 1 or not word.isupper())
+            if is_upper:
+                rust_input = pre_lower.upper()
+            elif is_title:
+                rust_input = pre_lower.capitalize()
+            else:
+                rust_input = pre_lower
+        else:
+            rust_input = word
+
+        result = rust_module.normalize_long_s_word_pass1(rust_input)
         applied_rules = []
 
         if result != lower:
             tracking = lower
+
+            # Quadgram rules first (applied pre-Rust)
+            for pattern, replacement, description in _PASS1_QUADGRAM_RULES:
+                if pattern in tracking:
+                    tracking = tracking.replace(pattern, replacement)
+                    applied_rules.append(description)
+                    rule_key = f"{pattern} \u2192 {replacement}"
+                    self.stats['transformations'][rule_key] = \
+                        self.stats['transformations'].get(rule_key, 0) + 1
 
             for pattern, replacement, description in _PASS1_TRIGRAM_RULES:
                 if pattern in tracking:
