@@ -147,6 +147,8 @@ jobs:
         with:
           path: dist
           merge-multiple: true
+      - name: Check distributions
+        run: pipx run twine check --strict dist/*
       - name: Publish to TestPyPI
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
         uses: pypa/gh-action-pypi-publish@release/v1
