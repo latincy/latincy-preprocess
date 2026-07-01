@@ -518,6 +518,30 @@ class TestFalsePositiveRegressions:
         result, _ = normalizer.normalize_word_full("fere", apply_pass2=True)
         assert result == "fere"
 
+    # --- fero passive / missing active forms ---
+    # The allowlist had all active forms of fero but was missing the passive
+    # paradigm and a handful of active forms.  Without these entries, Pass 2
+    # flips word-initial fe→se via the <fe vs <se trigram heuristic.
+
+    @pytest.mark.parametrize("word", [
+        # present passive
+        "feror", "ferris", "ferimur", "ferimini",
+        # imperfect active (missing slots)
+        "ferebas", "ferebamus", "ferebatis",
+        # future active (missing)
+        "feretis",
+        # imperfect passive
+        "ferebar", "ferebaris", "ferebamur", "ferebamini", "ferebantur",
+        # future passive
+        "ferar", "fereris", "feretur", "feremur", "feremini", "ferentur",
+        # gerundive
+        "ferendus", "ferenda",
+    ])
+    def test_fero_passive_and_missing_forms_preserved(self, normalizer, word):
+        """Missing fero forms must not be converted by the fe→se heuristic."""
+        result, _ = normalizer.normalize_word_full(word, apply_pass2=True)
+        assert result == word, f"Expected {word!r} preserved, got {result!r}"
+
 
 # ===========================================================================
 # Section 13: Regression — false negatives (real long-s OCR errors missed)
