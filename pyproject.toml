@@ -4,10 +4,10 @@ build-backend = "maturin"
 
 [project]
 name = "latincy-preprocess"
-version = "0.3.2"
+version = "0.3.3"
 description = "Latin text preprocessing: U/V normalization, long-s correction, and more"
 readme = "README.md"
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.10,<3.15"
 license = "MIT"
 authors = [
     {name = "Patrick Burns", email = "patrick@diyclassics.org"}
@@ -22,6 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Rust",
     "Topic :: Text Processing :: Linguistic",
     "Natural Language :: Latin",
