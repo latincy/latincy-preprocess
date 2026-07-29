@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.3] - 2026-07-28
+
+### Added
+
+- **Python 3.14 support.** The extension now builds against PyO3 0.25 (up from
+  0.23, which hard-capped at CPython 3.13 and made 3.14 installs fail in the
+  Rust build with *"the configured Python interpreter version (3.14) is newer
+  than PyO3's maximum supported version (3.13)"*). `requires-python` widened to
+  `<3.15`.
+
+### Changed
+
+- **Wheels are now abi3** (stable ABI, `abi3-py310`): one wheel per platform
+  (`cp310-abi3-*`) loads on CPython 3.10+ and on future CPython releases without
+  a rebuild, replacing the per-version wheel matrix. This ends the recurring
+  "new Python release has no wheel → pip falls back to a source build" failure,
+  and as a side effect adds macOS wheels for 3.10–3.12 (macOS previously shipped
+  a cp313 wheel only, forcing everyone else on macOS to compile from source).
+- CI test matrix extended through 3.13 and 3.14.
+
+### Notes
+
+- No API or behaviour changes. 621 parity/rules tests pass unchanged on
+  CPython 3.11, 3.12, 3.13, and 3.14.
+- Kept on the 0.3.x line (not 0.4.0) deliberately: the published `la_core_web_*`
+  models pin `latincy-preprocess>=0.2.0,<0.4.0`, so a 0.4.0 would be excluded and
+  reintroduce the resolver backtracking failure. 0.3.3 resolves under that
+  ceiling with no model re-release.
+
 ## [0.3.2] - 2026-06-30
 
 ### Fixed

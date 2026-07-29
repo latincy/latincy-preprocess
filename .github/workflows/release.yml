@@ -47,10 +47,12 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          # --find-interpreter picks all Pythons inside the manylinux container.
-          # requires-python in pyproject.toml (<3.14) keeps maturin from trying
-          # 3.14 which PyO3 0.23.x does not support.
-          args: --release --out dist --find-interpreter
+          # abi3 build (rust/Cargo.toml enables pyo3 "abi3-py310"): maturin emits
+          # ONE stable-ABI wheel (cp310-abi3-*) that loads on CPython 3.10+,
+          # including CPythons released after this build. So a single interpreter
+          # suffices — no --find-interpreter, no per-version matrix, and new
+          # Python releases need no rebuild.
+          args: --release --out dist
           manylinux: auto
           sccache: 'true'
       - name: Smoke-test wheel (native x86_64 only)
