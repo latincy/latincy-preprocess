@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/latincy/latincy-preprocess/main/assets/latincy-preprocess-logo.jpg" alt="LatinCy Preprocess" width="600">
 </p>
 
-Latin text preprocessing: U/V normalization, long-s OCR correction, diacritics stripping, macron removal, and Beta Code → Unicode Greek conversion — with optional Rust acceleration and spaCy integration.
+Latin text preprocessing: U/V normalization, long-s OCR correction, diacritics stripping, macron removal, and Beta Code → Unicode Greek conversion — plus Ancient Greek elision/accent normalization — with optional Rust acceleration and spaCy integration.
 
 Consolidates [latincy-uv](https://github.com/diyclassics/latincy-uv) and [latincy-long-s](https://github.com/diyclassics/latincy-long-s) into a single package.
 
@@ -15,6 +15,11 @@ pip install latincy-preprocess
 For spaCy pipeline components:
 ```bash
 pip install latincy-preprocess[spacy]
+```
+
+For Ancient Greek normalization:
+```bash
+pip install latincy-preprocess[grc]
 ```
 
 ## Quick Start
@@ -93,6 +98,39 @@ clean = beta_to_unicode(span) if is_betacode(span) else span
 ```
 
 `is_betacode()` is a heuristic (Beta Code written with no diacritics is indistinguishable from Latin), but it reliably catches accented Greek and ignores ordinary Latin punctuation.
+
+### Ancient Greek Normalization
+
+Requires the `grc` extra (`pip install latincy-preprocess[grc]`), which pulls in [`greek-normalisation`](https://github.com/jtauber/greek-normalisation).
+
+Canonicalizes Ancient Greek for consistent tokenization and dictionary lookup — collapsing the many treebank/corpus encodings of the elision apostrophe to a single codepoint (U+2019), stripping lexicographic macron/breve marks, and folding grave → acute for lemma matching:
+
+```python
+from latincy_preprocess.grc import (
+    normalize_surface,
+    normalize_norm,
+    normalize_lookup_key,
+    is_greek_word,
+)
+
+# Surface form: NFC + canonical elision apostrophe (U+2019)
+normalize_surface("μυρίʼ")     # 'μυρί’'   (Tesserae U+02BC → U+2019)
+normalize_surface("ἀλλ'")      # 'ἀλλ’'    (ASCII apostrophe → U+2019)
+
+# NORM: restore closed-class elision, grave → acute, movable nu/sigma
+normalize_norm("δʼ")           # 'δέ'
+normalize_norm("ἀλλ’")         # 'ἀλλά'
+
+# Lookup key: grave → acute + final-sigma folding for dictionary matching
+normalize_lookup_key("φονὸς")  # 'φονός'
+normalize_lookup_key("λογοσ")  # 'λογος'
+
+# Guard: Greek letters + the canonical elision mark only
+is_greek_word("μυρί’")         # True
+is_greek_word("anthropos")     # False
+```
+
+Consolidates the previously independent normalization implementations across the LatinCy Greek pipelines into a single source of truth for the elision/accent standard.
 
 ## spaCy Integration
 
@@ -175,6 +213,8 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 ## Acknowledgments
 
 The `betacode` submodule adapts the Beta Code → Unicode conversion tables and algorithm from the [Classical Language Toolkit](https://github.com/cltk/cltk) (`cltk.alphabet.grc.beta_to_unicode`), used under the MIT License (Copyright © 2013 Classical Language Toolkit). It is reimplemented here on the Python standard library so the package remains dependency-free.
+
+The `grc` submodule is built on James Tauber's [`greek-normalisation`](https://github.com/jtauber/greek-normalisation).
 
 ## License
 

@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-08-03
+
+### Added
+
+- **Ancient Greek (`grc`) normalization module** — the package's first
+  non-Latin content. New public API `normalize_surface`, `normalize_norm`,
+  `normalize_lookup_key`, `is_greek_word`, and the `GRAVE_TO_ACUTE` table
+  (`from latincy_preprocess.grc import ...`). Consolidates three previously
+  independent, partially-duplicated implementations across the LatinCy grc
+  repos (latincy-grc-pipelines' `functions.py`/`_normalize_greek` and
+  latincy-grc-words' `normalize.py`) into one source of truth for the grc
+  normalization standard: elision apostrophe canonicalized to U+2019 (U+0027,
+  U+02BC, U+1FBF, and dangling combining U+0313 all map to it), macron/breve
+  stripping, grave→acute folding, and final-sigma folding for lookup keys.
+- **New optional extra `grc`** (`pip install latincy-preprocess[grc]`) pulling
+  in `greek-normalisation>=0.5.1`, on which the module is built.
+- 27 tests (`tests/test_grc_rules.py`), including a parity check against the
+  pre-consolidation latincy-grc-pipelines behavior for the Tesserae-style
+  elision cases that motivated the work, and a regression test for a real
+  corruption bug fixed here: a vowel marked with both length (breve) and
+  breathing has no single precomposed codepoint, so NFC alone left the
+  breathing dangling and it was mis-read as elision (`ᾰ̓γγέλλω` → `α’γγέλλω`
+  instead of `ἀγγέλλω`); macron/breve stripping now runs before the
+  dangling-U+0313 check.
+
+### Changed
+
+- Package description and keywords/classifiers updated to reflect Ancient Greek
+  support (added `greek` keyword, `Natural Language :: Greek` classifier).
+
+### Notes
+
+- Additive only — zero changes to existing Latin functionality (U/V, long-s,
+  betacode). Safe MINOR bump under semver.
+- Published `la_core_web_*` models pin `latincy-preprocess>=0.2.0,<0.4.0`, so
+  Latin-model installs continue to resolve to 0.3.3 and are unaffected. The grc
+  module targets the grc-pipelines/grc-words consumers, which do not depend on
+  the Latin core models; co-resolving the Latin models with the grc features in
+  one environment requires those models to raise their upper bound in a future
+  re-release.
+
 ## [0.3.3] - 2026-07-28
 
 ### Added
@@ -141,6 +182,7 @@ This release bundles the U/V enclitic fixes below with the new betacode submodul
 
 - Initial release: U/V normalization, long-s OCR correction, diacritics stripping, macron removal, spaCy integration, optional Rust backend.
 
+[0.4.0]: https://github.com/latincy/latincy-preprocess/compare/v0.3.3...v0.4.0
 [0.3.0]: https://github.com/latincy/latincy-preprocess/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/latincy/latincy-preprocess/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/latincy/latincy-preprocess/compare/v0.1.1...v0.1.2

@@ -4,15 +4,15 @@ build-backend = "maturin"
 
 [project]
 name = "latincy-preprocess"
-version = "0.3.3"
-description = "Latin text preprocessing: U/V normalization, long-s correction, and more"
+version = "0.4.0"
+description = "Latin and Ancient Greek text preprocessing: U/V normalization, long-s correction, elision canonicalization, and more"
 readme = "README.md"
 requires-python = ">=3.10,<3.15"
 license = "MIT"
 authors = [
     {name = "Patrick Burns", email = "patrick@diyclassics.org"}
 ]
-keywords = ["latin", "nlp", "normalization", "philology", "text-processing", "ocr"]
+keywords = ["latin", "greek", "nlp", "normalization", "philology", "text-processing", "ocr"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
@@ -26,12 +26,14 @@ classifiers = [
     "Programming Language :: Rust",
     "Topic :: Text Processing :: Linguistic",
     "Natural Language :: Latin",
+    "Natural Language :: Greek",
 ]
 
 dependencies = []
 
 [project.optional-dependencies]
 spacy = ["spacy>=3.5.0"]
+grc = ["greek-normalisation>=0.5.1"]
 dev = [
     "pytest>=7.0.0",
     "pytest-benchmark>=4.0",
