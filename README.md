@@ -2,6 +2,13 @@
   <img src="https://raw.githubusercontent.com/latincy/latincy-preprocess/main/assets/latincy-preprocess-logo.jpg" alt="LatinCy Preprocess" width="600">
 </p>
 
+<p align="center">
+  <a href="https://pypi.org/project/latincy-preprocess/"><img src="https://img.shields.io/pypi/v/latincy-preprocess.svg" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/latincy-preprocess/"><img src="https://img.shields.io/pypi/pyversions/latincy-preprocess.svg" alt="Python versions"></a>
+  <a href="https://github.com/latincy/latincy-preprocess/actions/workflows/ci.yml"><img src="https://github.com/latincy/latincy-preprocess/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+</p>
+
 Latin text preprocessing: U/V normalization, long-s OCR correction, diacritics stripping, macron removal, and Beta Code → Unicode Greek conversion — plus Ancient Greek elision/accent normalization — with optional Rust acceleration and spaCy integration.
 
 Consolidates [latincy-uv](https://github.com/diyclassics/latincy-uv) and [latincy-long-s](https://github.com/diyclassics/latincy-long-s) into a single package.
