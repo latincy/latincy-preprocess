@@ -36,13 +36,13 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: rust
-      - name: Build extension + install (dev + spacy extras)
+      - name: Build extension + install (dev + spacy + grc extras)
         # Editable install drives maturin as the PEP 517/660 build backend, so
         # the Rust extension is compiled and installed into the runner's Python
         # with no separate virtualenv (which `maturin develop` would require).
         run: |
           python -m pip install --upgrade pip
-          pip install -e '.[dev,spacy]'
+          pip install -e '.[dev,spacy,grc]'
           # spaCy's CLI import needs click; some typer versions don't pull it in,
           # which would otherwise skip the spaCy tests via importorskip.
           python -c "import click" 2>/dev/null || pip install click
