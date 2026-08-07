@@ -236,16 +236,25 @@ def normalize_norm(text: str) -> str:
     if not text:
         return text
     normed = _NORMALISER.normalise(normalize_surface(text))[0]
-    if normed.endswith("’"):
-        extra = GRC_ELISION_EXTRA.get(normed)
-        if extra is None and normed[:1] != normed[:1].lower():
-            lowered = normed[:1].lower() + normed[1:]
-            restored = GRC_ELISION_EXTRA.get(lowered)
-            if restored is not None:
-                extra = restored[:1].upper() + restored[1:]
-        if extra is not None:
-            return extra
-    return normed
+    if not normed.endswith("’"):
+        return normed
+    extra = GRC_ELISION_EXTRA.get(normed)
+    if extra is not None:
+        return extra
+    # Titlecase fallback. BOTH maps — the library's ELISION and the overlay —
+    # are keyed on lowercase, so a sentence-initial capital (Ἀλλ’, Ἔνθ’, Δ’)
+    # misses in both and would leak the elided surface. Re-run the lowercased
+    # form through the library AND the overlay, then restore the capital.
+    # Consulting the overlay alone here would fix only the 54 overlay entries
+    # and leave all 36 library entries capital-broken.
+    first = normed[:1]
+    if first == first.lower():
+        return normed
+    restored = _NORMALISER.normalise(first.lower() + normed[1:])[0]
+    restored = GRC_ELISION_EXTRA.get(restored, restored)
+    if restored.endswith("’"):
+        return normed  # neither map knew it; keep the original, elided
+    return restored[:1].upper() + restored[1:]
 
 
 def _fold_final_sigma(text: str) -> str:

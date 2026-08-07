@@ -21,6 +21,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Titlecase fallback in `normalize_norm`, so line-initial capitalized elisions
   (`Ἔνθ’` → `Ἔνθα`) restore without duplicating every entry.
 
+### Fixed
+
+- **Capitalized elisions of *library* map entries never restored.** Both
+  `greek-normalisation`'s `ELISION` map and the overlay are keyed on
+  lowercase, so a sentence-initial capital missed in both and leaked the
+  elided surface — affecting all 36 library entries, including `Ἀλλ’`,
+  `Οὐδ’`, `Κατ’`, `Δ’`, `Μ’`. The titlecase fallback now re-runs the
+  lowercased form through the library map as well as the overlay. Ambiguous
+  forms still refuse to restore in either casing.
+
 ### Notes
 
 - Additive only. The overlay never shadows the library map, and ambiguous

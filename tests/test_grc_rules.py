@@ -10,6 +10,7 @@ cases that motivated this module (Tesserae-style elision: μυρίʼ, ἀπερ�
 import pytest
 
 from latincy_preprocess.grc import (
+    GRC_ELISION_EXTRA,
     is_greek_word,
     normalize_lookup_key,
     normalize_norm,
@@ -116,6 +117,40 @@ class TestNormalizeNorm:
     def test_capitalized_elision_restores_via_titlecase_fallback(self):
         assert normalize_norm("Ἔνθ’") == "Ἔνθα"
         assert normalize_norm("Ἄλλ’") == "Ἄλλα"
+
+    def test_capitalized_elision_covers_the_library_map_too(self):
+        # The titlecase fallback must re-run the lowercased form through the
+        # LIBRARY map as well as the overlay. Consulting the overlay alone
+        # restored only its own 54 entries and left all 36 library entries
+        # capital-broken — including sentence-initial Ἀλλ’/Οὐδ’/Δ’, which are
+        # exactly the case the fallback exists for.
+        assert normalize_norm("Ἀλλ’") == "Ἀλλά"
+        assert normalize_norm("Οὐδ’") == "Οὐδέ"
+        assert normalize_norm("Κατ’") == "Κατά"
+        assert normalize_norm("Καθ’") == "Κατά"  # aspirated
+        assert normalize_norm("Δ’") == "Δέ"
+        assert normalize_norm("Μ’") == "Με"
+        assert normalize_norm("Μήδ’") == "Μηδέ"  # accent shifts with restoration
+        assert normalize_norm("Σ’") == "Σε"      # ς’/σ’ final-sigma encoding
+
+    def test_every_elision_entry_restores_in_both_cases(self):
+        # Exhaustive: no entry in either map may leak an elided surface, in
+        # either casing. Guards against a future entry being added in a form
+        # whose capital does not round-trip.
+        from greek_normalisation.norm_data import ELISION
+
+        for mapping in (ELISION, GRC_ELISION_EXTRA):
+            for elided, restored in mapping.items():
+                assert normalize_norm(elided) == restored
+                cap = elided[:1].upper() + elided[1:]
+                if cap != elided:
+                    assert normalize_norm(cap) == restored[:1].upper() + restored[1:]
+
+    def test_capitalized_ambiguous_elision_still_not_restored(self):
+        # The fallback must not become a back door around the curation policy.
+        assert normalize_norm("Μυρί’") == "Μυρί’"
+        assert normalize_norm("Αὖθ’") == "Αὖθ’"
+        assert normalize_norm("Ἔστ’") == "Ἔστ’"
 
     def test_ambiguous_elision_not_restored(self):
         # Restorations the overlay must NOT guess: content words with
