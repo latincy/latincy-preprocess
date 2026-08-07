@@ -20,6 +20,9 @@ Per-normalizer usage:
     ('statua', [...])
 """
 
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _dist_version
+
 from latincy_preprocess._strip import strip_macrons
 from latincy_preprocess.betacode import BetaCodeReplacer, beta_to_unicode, is_betacode
 from latincy_preprocess.diacritics import strip_diacritics
@@ -39,7 +42,14 @@ except ImportError:
     _rust = None
     _BACKEND = "python"
 
-__version__ = "0.5.0"
+# Single source of truth is pyproject.toml's [project].version, read back off
+# the installed distribution metadata. A hardcoded literal here silently drifted
+# from pyproject.toml in three consecutive releases (0.4.0, 0.5.0, 0.5.1), each
+# time shipping a wheel whose `pip show` and `__version__` disagreed.
+try:
+    __version__ = _dist_version("latincy-preprocess")
+except PackageNotFoundError:  # source tree on sys.path, never installed
+    __version__ = "0.0.0.dev0"
 __all__ = [
     "normalize",
     "backend",
