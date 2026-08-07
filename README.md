@@ -21,13 +21,21 @@ pip install latincy-preprocess
 
 For spaCy pipeline components:
 ```bash
-pip install latincy-preprocess[spacy]
+pip install "latincy-preprocess[spacy]"
 ```
 
 For Ancient Greek normalization:
 ```bash
-pip install latincy-preprocess[grc]
+pip install "latincy-preprocess[grc]"
 ```
+
+For both:
+```bash
+pip install "latincy-preprocess[spacy,grc]"
+```
+
+(The quotes matter in zsh — the default shell on macOS — which otherwise
+treats the brackets as a glob pattern and fails with `no matches found`.)
 
 ## Quick Start
 
