@@ -47,7 +47,6 @@ training/**/data/
 docs/
 
 # Claude
-.claude/settings.local.json
 .claude/
 
 # Security audit additions

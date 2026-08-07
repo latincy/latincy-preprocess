@@ -2,9 +2,12 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
 title: "LatinCy Preprocess"
-abstract: "Latin text normalization: long-s and U/V resolution"
+abstract: "Latin and Ancient Greek text preprocessing: U/V normalization, long-s OCR correction, diacritics stripping, Beta Code conversion, and Greek elision/accent normalization"
 authors:
   - family-names: Burns
     given-names: Patrick J.
+version: 0.5.0
+date-released: 2026-08-07
 license: MIT
 repository-code: "https://github.com/latincy/latincy-preprocess"
+url: "https://github.com/latincy/latincy-preprocess"
