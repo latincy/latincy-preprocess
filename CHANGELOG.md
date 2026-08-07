@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-08-07
+
+### Added
+
+- **`GRC_ELISION_EXTRA`** — a LatinCy-owned elision-restoration overlay for
+  `grc`, consulted only after `greek-normalisation`'s own `ELISION` map misses.
+  The library map is NT/MorphGNT-oriented (36 entries) and has essentially no
+  epic/tragic coverage, so forms like `ἄρ’`, `κ’`, `θ’`, `ἔνθ’`, `μάλ’`,
+  `οὔτ’`, `ἔπειτ’`, and `μέγ’` previously leaked the elided surface through
+  `normalize_norm` as the isolation form — and from there, via the
+  lookup_lemmatizer fallback, as the lemma. Reported externally against Homer,
+  where `ἄρ’` alone is ~600 tokens. Values are the restored form in isolation
+  (MorphGNT sense), not the lemma: `μέγ’` → `μέγα` (lemma μέγας).
+- Titlecase fallback in `normalize_norm`, so line-initial capitalized elisions
+  (`Ἔνθ’` → `Ἔνθα`) restore without duplicating every entry.
+
+### Notes
+
+- Additive only. The overlay never shadows the library map, and ambiguous
+  restorations are deliberately excluded rather than guessed — `μυρί’`,
+  `αὖθ’` (αὖτε/αὖθι), `ἔστ’` (ἐστί/ἔστε), `οἶδ’`, `Δί’`, and generic verb
+  `-ε`/`-ο` elisions all stay elided. Curation policy and the exclusion list
+  are documented inline at the table.
+- New regression test pinning the keraia asymmetry: `δʹ` (numeral 4) must not
+  be folded onto an elision apostrophe, which would make it byte-identical to
+  elided `δέ`.
+
 ## [0.4.0] - 2026-08-03
 
 ### Added

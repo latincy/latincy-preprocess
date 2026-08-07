@@ -65,6 +65,20 @@ class TestNormalizeSurface:
     def test_empty_string(self):
         assert normalize_surface("") == ""
 
+    def test_keraia_is_not_an_elision_mark(self):
+        # Greek numeral sign (keraia): U+0374 has a canonical decomposition to
+        # U+02B9 MODIFIER LETTER PRIME, so plain NFC silently folds δʹ(U+0374)
+        # -> δʹ(U+02B9). Neither codepoint may be treated as an elision
+        # apostrophe: δʹ is the numeral 4, and collapsing it to δ’ would make
+        # it byte-identical to elided δέ — the gold corpus keeps 1,800+ NUM
+        # tokens on the U+02B9 form. This pins the (intentional) asymmetry.
+        keraia_0374 = "δ" + chr(0x0374)  # explicit codepoints: the two
+        keraia_02b9 = "δ" + chr(0x02B9)  # keraia forms look identical
+        assert normalize_surface(keraia_0374) == keraia_02b9  # NFC fold only
+        assert normalize_surface(keraia_02b9) == keraia_02b9  # untouched
+        assert "’" not in normalize_surface(keraia_0374)
+        assert normalize_norm(keraia_02b9) == keraia_02b9     # no restoration
+
 
 # =============================================================================
 # normalize_norm
@@ -82,11 +96,40 @@ class TestNormalizeNorm:
         assert normalize_norm("δ'") == "δέ"
         assert normalize_norm("δʼ") == "δέ"
 
-    def test_content_word_elision_not_restored(self):
-        # greek-normalisation only restores a closed set of functors; general
-        # content-word elision (epic/poetic) is a known, separate gap — this
-        # module must not silently guess.
+    def test_epic_elision_restored_via_latincy_overlay(self):
+        # The library's ELISION map is NT-oriented; the LatinCy overlay
+        # (GRC_ELISION_EXTRA) covers the epic/tragic set that previously
+        # leaked the elided surface as norm AND lemma (external Homer report:
+        # ἄρ’ 581×, κ’ 239×, θ’ 219×, ...).
+        assert normalize_norm("ἄρ’") == "ἄρα"
+        assert normalize_norm("ἄρʼ") == "ἄρα"  # U+02BC input, as Perseus ships
+        assert normalize_norm("κ’") == "κε"
+        assert normalize_norm("θ’") == "τε"     # de-aspirated
+        assert normalize_norm("ἔνθ’") == "ἔνθα"
+        assert normalize_norm("μάλ’") == "μάλα"
+        assert normalize_norm("οὔτ’") == "οὔτε"
+        assert normalize_norm("ἔπειτ’") == "ἔπειτα"
+        assert normalize_norm("μέγ’") == "μέγα"   # form in isolation, not lemma
+        assert normalize_norm("πόλλ’") == "πολλά"  # accent restored with the vowel
+        assert normalize_norm("ῥ’") == "ῥα"
+
+    def test_capitalized_elision_restores_via_titlecase_fallback(self):
+        assert normalize_norm("Ἔνθ’") == "Ἔνθα"
+        assert normalize_norm("Ἄλλ’") == "Ἄλλα"
+
+    def test_ambiguous_elision_not_restored(self):
+        # Restorations the overlay must NOT guess: content words with
+        # uncertain vocalism (μυρί’) and genuinely ambiguous functors
+        # (αὖθ’ = αὖτε or αὖθι; ἔστ’ = ἐστί or ἔστε). These stay elided.
         assert normalize_norm("μυρί’") == "μυρί’"
+        assert normalize_norm("αὖθ’") == "αὖθ’"
+        assert normalize_norm("ἔστ’") == "ἔστ’"
+
+    def test_overlay_does_not_shadow_library_map(self):
+        # Library entries keep their library values (overlay fires only when
+        # the library map misses).
+        assert normalize_norm("ταῦθ’") == "ταῦτα"
+        assert normalize_norm("ποτ’") == "ποτε"
 
 
 # =============================================================================

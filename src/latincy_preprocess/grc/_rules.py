@@ -96,6 +96,91 @@ _COMBINING_BREVE = "̆"
 _NORM_CONFIG = _GNNorm.GRAVE | _GNNorm.ELISION | _GNNorm.MOVABLE | _GNNorm.EXTRA
 _NORMALISER = _GNNormaliser(config=_NORM_CONFIG)
 
+# LatinCy-owned elision restoration overlay, consulted AFTER the library's
+# ELISION map (greek_normalisation.norm_data.ELISION, 36 NT/MorphGNT-oriented
+# entries) fails to fire. The library map has essentially no epic/tragic
+# coverage — ἄρ’, κ’, θ’, ἔνθ’, μάλ’, οὔτ’, ἔπειτ’, μέγ’ etc. all fall through
+# and previously leaked the elided surface as the "isolation form" (and from
+# there, via the lookup_lemmatizer fallback, as the lemma; reported externally
+# against Homer, where ἄρ’ alone is ~600 tokens).
+#
+# Values are the restored FORM IN ISOLATION (MorphGNT sense), not the lemma:
+# μέγ’ -> μέγα (lemma μέγας), πόλλ’ -> πολλά (lemma πολύς). Enclitics restore
+# unaccented, matching the library's own convention (ποτ’ -> ποτε, σ’ -> σε).
+#
+# Curation policy: only forms whose restoration is unambiguous. Mined from the
+# normalized LatinCy grc treebanks (Perseus/PROIEL/PTNK/GLAUx), frequency floor
+# ~200 gold tokens, plus the externally-reported Homer set. Deliberately
+# EXCLUDED as ambiguous — do not add without evidence:
+#   αὖθ’ (αὖτε/αὖθι), ἔστ’/ἔσθ’ (ἐστί/ἔστε), οἶδ’ (οἶδα/οἶδε),
+#   αὐτ’ (αὐτό/αὐτά), κεῖν’ (κεῖνο/κεῖνα), Δί’ (Διί/Δία), τιν’ (τινά/τινί),
+#   μυρί’ (μυρία/μυρίοι-vocalism uncertain), generic verb -ε/-ο elisions.
+# Person/case-ambiguous forms that still share ONE lemma (οἶδ’, ἔφατ’, Δί’)
+# belong in the latincy-grc-words lemma table as aliases, not here.
+GRC_ELISION_EXTRA: Dict[str, str] = {
+    # particles
+    "ἄρ’": "ἄρα",
+    "ἆρ’": "ἆρα",
+    "ῥ’": "ῥα",
+    "κ’": "κε",
+    "θ’": "τε",       # aspirated before rough breathing
+    "ς’": "σε",       # final-sigma encoding of σ’ (GLAUx artifact, 1k+ gold tokens)
+    # negative/copulative conjunctions
+    "οὔτ’": "οὔτε",
+    "οὔθ’": "οὔτε",
+    "μήτ’": "μήτε",
+    "μήθ’": "μήτε",
+    "ἠδ’": "ἠδέ",
+    # subordinators
+    "ὥστ’": "ὥστε",
+    "ὥσθ’": "ὥστε",
+    "ὅθ’": "ὅτε",
+    # adverbs
+    "ἔνθ’": "ἔνθα",
+    "ἐνθάδ’": "ἐνθάδε",
+    "μάλ’": "μάλα",
+    "μάλιστ’": "μάλιστα",
+    "μάλισθ’": "μάλιστα",
+    "ἔπειτ’": "ἔπειτα",
+    "ἔπειθ’": "ἔπειτα",
+    "εἶθ’": "εἶτα",
+    "τότ’": "τότε",
+    "ποθ’": "ποτε",   # aspirated ποτ’; unaccented like the library's ποτ’ -> ποτε
+    "οὐκέτ’": "οὐκέτι",
+    "μηκέτ’": "μηκέτι",
+    "τάχ’": "τάχα",
+    "ὧδ’": "ὧδε",
+    "δῆτ’": "δῆτα",
+    "αὖτ’": "αὖτε",
+    "ἅμ’": "ἅμα",
+    "ἔγωγ’": "ἔγωγε",
+    # prepositions (library covers ἀπ’/ἐπ’/κατ’/μετ’/παρ’/ὑπ’/δι’ + aspirates)
+    "ἀντ’": "ἀντί",
+    "ἀμφ’": "ἀμφί",
+    # pronouns / demonstratives (-δε deictics restore the dropped ε)
+    "τοῦθ’": "τοῦτο",
+    "τόδ’": "τόδε",
+    "τάδ’": "τάδε",
+    "ὅδ’": "ὅδε",
+    "τόνδ’": "τόνδε",
+    "τήνδ’": "τήνδε",
+    "τῷδ’": "τῷδε",
+    "τῶνδ’": "τῶνδε",
+    "τοῖσδ’": "τοῖσδε",
+    "τούσδ’": "τούσδε",
+    "τοιαῦτ’": "τοιαῦτα",
+    "τοιαῦθ’": "τοιαῦτα",
+    "τοσαῦτ’": "τοσαῦτα",
+    "τοσαῦθ’": "τοσαῦτα",
+    "ὅσ’": "ὅσα",
+    "ὅς’": "ὅσα",     # final-sigma encoding, as with ς’
+    # adjectives/quantifiers with unambiguous neuter restoration
+    "μέγ’": "μέγα",
+    "ἄλλ’": "ἄλλα",   # accented ἄ- : ἄλλος, never the conjunction ἀλλ(ά)
+    "πόλλ’": "πολλά",
+    "δύ’": "δύο",
+}
+
 
 @functools.lru_cache(maxsize=100_000)
 def normalize_surface(text: str) -> str:
@@ -141,11 +226,26 @@ def normalize_norm(text: str) -> str:
     Restores elision (ἀλλ'->ἀλλά, δ'->δέ), folds grave->acute and movable
     nu/sigma. Surface-normalises first (else ELISION can't fire — the
     `greek-normalisation` library only recognises elision when the
-    apostrophe is already U+2019).
+    apostrophe is already U+2019). Forms the library's NT-oriented ELISION
+    map misses are restored via the LatinCy overlay ``GRC_ELISION_EXTRA``
+    (epic/tragic coverage), including a titlecase fallback so line-initial
+    capitalized elisions (Ἄρ’) restore too. Forms in neither map are
+    returned elided, unchanged — this module must not guess ambiguous
+    restorations (μυρί’, ἔστ’).
     """
     if not text:
         return text
-    return _NORMALISER.normalise(normalize_surface(text))[0]
+    normed = _NORMALISER.normalise(normalize_surface(text))[0]
+    if normed.endswith("’"):
+        extra = GRC_ELISION_EXTRA.get(normed)
+        if extra is None and normed[:1] != normed[:1].lower():
+            lowered = normed[:1].lower() + normed[1:]
+            restored = GRC_ELISION_EXTRA.get(lowered)
+            if restored is not None:
+                extra = restored[:1].upper() + restored[1:]
+        if extra is not None:
+            return extra
+    return normed
 
 
 def _fold_final_sigma(text: str) -> str:

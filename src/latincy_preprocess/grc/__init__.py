@@ -17,6 +17,7 @@ Basic usage:
 
 from latincy_preprocess.grc._rules import (
     GRAVE_TO_ACUTE,
+    GRC_ELISION_EXTRA,
     is_greek_word,
     normalize_lookup_key,
     normalize_norm,
@@ -25,6 +26,7 @@ from latincy_preprocess.grc._rules import (
 
 __all__ = [
     "GRAVE_TO_ACUTE",
+    "GRC_ELISION_EXTRA",
     "is_greek_word",
     "normalize_lookup_key",
     "normalize_norm",
