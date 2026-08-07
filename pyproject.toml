@@ -54,7 +54,11 @@ python-source = "src"
 manifest-path = "rust/Cargo.toml"
 module-name = "latincy_preprocess._rust"
 features = ["pyo3/extension-module", "pyo3-backend"]
-include = ["LICENSE", "src/latincy_preprocess/long_s/data/**/*.json"]
+include = [
+    "LICENSE",
+    "src/latincy_preprocess/py.typed",
+    "src/latincy_preprocess/long_s/data/**/*.json",
+]
 
 [tool.ruff]
 line-length = 88

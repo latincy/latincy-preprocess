@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   (MorphGNT sense), not the lemma: `μέγ’` → `μέγα` (lemma μέγας).
 - Titlecase fallback in `normalize_norm`, so line-initial capitalized elisions
   (`Ἔνθ’` → `Ἔνθα`) restore without duplicating every entry.
+- **PEP 561 `py.typed` marker.** The package was already annotated but shipped
+  no marker, so mypy/pyright treated it as untyped and silently ignored its
+  hints. Type checkers now resolve `latincy_preprocess` and enforce its
+  signatures.
 
 ### Fixed
 
