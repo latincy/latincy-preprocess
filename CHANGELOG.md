@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.5.1] - 2026-08-07
+
+### Fixed
+
+- **`grc`: a combining mark placed BEFORE its base letter is now re-attached
+  to it instead of being mistaken for an elision apostrophe.** Betacode writes
+  a capital's diacritics between the `*` marker and the letter (`*)A` = Ἀ),
+  and some TEI sources do the same, so converters emit `U+0313 + Α`. NFC can
+  never compose that — combining marks bind leftward — so the orphaned mark
+  reached the dangling-U+0313 rule and became an apostrophe: `̓Αχαιῶν` came out
+  as `’Αχαιῶν` rather than `Ἀχαιῶν`. Common at scale in Betacode- and
+  TEI-derived text, and concentrated in high-frequency capitalized proper nouns
+  (`Ἀθηναῖοι`, `Ἀλέξανδρος`, `Ἀχαιῶν`); in TEI sources the dominant variant is
+  `U+0314` (`̔Ρωμαίων` for `Ῥωμαίων`).
+
+  The repair is self-validating: a leading mark is reordered **only when it
+  precedes a letter and mark + base actually compose under NFC**. Composition
+  proves the mark belonged to that letter, so papyrological markup that
+  legitimately precedes text — dot below for an uncertain letter (`U+0323`),
+  double macron over nomina sacra (`U+035E`) — has no precomposed form, does
+  not compose, and is left untouched. Marks already following a letter (real
+  elision, real breathings) are never considered, so well-formed input is
+  unchanged from 0.5.0.
+
+  Downstream: any corpus, lemma table, or vector model built by normalizing
+  Betacode- or TEI-derived Greek through 0.5.0 or earlier carries this
+  corruption and should be regenerated.
+
 ## [0.5.0] - 2026-08-07
 
 ### Added
@@ -223,6 +251,8 @@ This release bundles the U/V enclitic fixes below with the new betacode submodul
 
 - Initial release: U/V normalization, long-s OCR correction, diacritics stripping, macron removal, spaCy integration, optional Rust backend.
 
+[0.5.1]: https://github.com/latincy/latincy-preprocess/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/latincy/latincy-preprocess/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/latincy/latincy-preprocess/compare/v0.3.3...v0.4.0
 [0.3.0]: https://github.com/latincy/latincy-preprocess/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/latincy/latincy-preprocess/compare/v0.1.2...v0.2.0
