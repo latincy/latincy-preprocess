@@ -40,8 +40,8 @@ Thumbs.db
 # Data artifacts (raw corpora, model checkpoints) — root-level only, so it does
 # not shadow bundled package data (src/.../long_s/data) or test fixtures (tests/data)
 /data/
-training/diacritics/checkpoints/
-training/diacritics/data/
+training/**/checkpoints/
+training/**/data/
 
 # Draft docs
 docs/
