@@ -182,6 +182,52 @@ GRC_ELISION_EXTRA: Dict[str, str] = {
 }
 
 
+def _reattach_orphaned_marks(text: str) -> str:
+    """Move a combining mark that PRECEDES its base letter back onto it.
+
+    Betacode writes a capital's diacritics between the ``*`` marker and the
+    letter (``*)A`` = Ἀ), and some TEI sources do the same, so converters emit
+    the mark first: ``U+0313 + Α``. NFC can never compose that — a combining
+    mark only binds leftward — so the mark survives to the dangling-U+0313
+    rule in ``normalize_surface`` and is mistaken for an elision apostrophe.
+    Observed: ``̓Αχαιῶν`` -> ``’Αχαιῶν`` instead of ``Ἀχαιῶν``, 113k+ sequences
+    in the grc text corpus and 538 more in the TEI collections (the U+0314
+    variant, ``̔Ρωμαίων`` for ``Ῥωμαίων``, is the same defect).
+
+    The rule is self-validating: reorder ONLY when mark+base actually compose
+    under NFC. Composition proves the mark belonged to that letter, so
+    editorial markup that legitimately precedes text — papyrological dot-below
+    (U+0323), double macron over nomina sacra (U+035E) — never composes and is
+    left untouched. A mark already following a letter is normal (elision, or a
+    real breathing) and is never considered.
+    """
+    if not any(unicodedata.combining(c) for c in text):
+        return text
+    out: list[str] = []
+    i, n = 0, len(text)
+    while i < n:
+        c = text[i]
+        # Orphaned = nothing precedes it that it could attach to (string
+        # start, or after whitespace/punctuation rather than a letter).
+        if unicodedata.combining(c) and (not out or not out[-1].isalpha()):
+            j = i
+            while j < n and unicodedata.combining(text[j]):
+                j += 1
+            # Base must be a LETTER: composition alone would also fire on
+            # math/arrow bases (U+0338 + "=" -> "≠"), which is never the
+            # Betacode/TEI defect this repairs.
+            if j < n and text[j].isalpha():
+                marks, base = text[i:j], text[j]
+                comp = unicodedata.normalize("NFC", base + marks)
+                if len(comp) < 1 + len(marks):      # something composed
+                    out.append(comp)
+                    i = j + 1
+                    continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
 @functools.lru_cache(maxsize=100_000)
 def normalize_surface(text: str) -> str:
     """Canonical SURFACE form: NFC + a single elision codepoint (U+2019).
@@ -213,6 +259,10 @@ def normalize_surface(text: str) -> str:
     text = unicodedata.normalize("NFD", text)
     text = text.replace(_COMBINING_MACRON, "").replace(_COMBINING_BREVE, "")
     text = unicodedata.normalize("NFC", text)
+    # Re-attach marks that PRECEDE their base letter (Betacode/TEI capital
+    # order) BEFORE the dangling-mark rule below, or a misordered breathing is
+    # read as elision and becomes an apostrophe (̓Αχαιῶν -> ’Αχαιῶν).
+    text = _reattach_orphaned_marks(text)
     text = text.replace("̓", "’")  # dangling combining elision -> U+2019
     text = text.replace("'", "’")  # ascii apostrophe -> U+2019
     text = text.replace("̅", "")        # strip stray combining overline

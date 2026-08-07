@@ -66,6 +66,41 @@ class TestNormalizeSurface:
     def test_empty_string(self):
         assert normalize_surface("") == ""
 
+    def test_mark_preceding_its_base_letter_is_reattached(self):
+        # Betacode writes a capital's diacritics between the * marker and the
+        # letter (*)A = Ἀ), so converters emit the mark FIRST. NFC can never
+        # compose that (combining marks bind leftward), so it used to survive
+        # to the dangling-U+0313 rule and become an apostrophe:
+        # ̓Αχαιῶν -> ’Αχαιῶν. 113k+ such sequences existed in the grc text
+        # corpus, plus 538 in the TEI collections.
+        assert normalize_surface("̓Αχαιῶν") == "Ἀχαιῶν"
+        assert normalize_surface("̓αγαθός") == "ἀγαθός"
+        # U+0314 (rough breathing) variant — the dominant one in TEI sources
+        assert normalize_surface("̔Ρωμαίων") == "Ῥωμαίων"
+        # multiple stacked marks (breathing + accent)
+        assert normalize_surface("̓́Αρης") == "Ἄρης"
+        # word-initial mid-string, not only at position 0
+        assert normalize_surface("καὶ ̓Αχαιῶν") == "καὶ Ἀχαιῶν"
+
+    def test_editorial_marks_before_text_are_left_alone(self):
+        # Reattachment fires only when mark+base actually COMPOSE, which is
+        # what keeps it off papyrological markup: dot-below (uncertain letter)
+        # and double macron (nomina sacra) have no precomposed form, so they
+        # must pass through untouched rather than be reordered onto the letter.
+        assert normalize_surface("̣α") == "̣α"
+        assert normalize_surface("͞ΘΣ") == "͞ΘΣ"
+        # Composition alone is not sufficient: the base must also be a LETTER.
+        # U+0338 composes with math/arrow bases (= -> ≠), which is never the
+        # Betacode/TEI misordering this repairs.
+        assert normalize_surface("̸=") == "̸="
+
+    def test_reattachment_does_not_disturb_normal_input(self):
+        # A mark FOLLOWING a letter is the normal case — real elision, or a
+        # legitimate breathing. Neither may be touched.
+        assert normalize_surface("δ̓") == "δ’"            # elision stays elision
+        assert normalize_surface("ἀγαθός") == "ἀγαθός"          # composed breathing
+        assert normalize_surface("ᾰ̓γγέλλω") == "ἀγγέλλω"       # breve+breathing
+
     def test_keraia_is_not_an_elision_mark(self):
         # Greek numeral sign (keraia): U+0374 has a canonical decomposition to
         # U+02B9 MODIFIER LETTER PRIME, so plain NFC silently folds δʹ(U+0374)
